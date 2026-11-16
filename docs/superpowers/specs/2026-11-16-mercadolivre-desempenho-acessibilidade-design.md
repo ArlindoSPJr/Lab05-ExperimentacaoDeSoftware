@@ -32,7 +32,7 @@ Medir, de fora e como um usuário comum, o **desempenho** e a **acessibilidade**
 
 - O objeto de estudo é o **site em operação**. O GitHub e o GitHub Actions são só instrumentos de coleta, nunca objeto de pesquisa (§2a e §10).
 - O grupo precisa provar com fontes datadas os 3 critérios: real, em operação e alto impacto. Ver o §5.1. **Nenhum número foi assumido neste documento.**
-- Nenhum outro grupo pode estudar o mesmo software. **Confirmar com o professor na S01.**
+- Nenhum outro grupo pode estudar o mesmo software. **Confirmado: nenhum outro grupo escolheu o Mercado Livre.**
 - Entregas: S01, S02, S03 e Final, com 5 pontos cada. A apresentação é de 10 min, **em 04/12**.
 - O PDF pede o link do repositório e do **GitHub Projects** (§7). O Kanban é criado na S01.
 
@@ -152,15 +152,15 @@ H1 é parcialmente verdadeira por construção, porque o perfil móvel aplica th
 - **Descritiva:** mediana, IQR, percentis 75 e 90, e boxplots por combinação, sempre por URL e no agregado. Também a fração de medições que cumpre o SLO.
 - **H1 e H3, com interações:** modelo linear de efeitos mistos
   `log(métrica) ~ perfil * horário * tipo + (1 | URL) + (1 | dia)`.
-  O efeito é relatado como **razão** (ex.: "o pico é 1,15× mais lento"), com IC de 95%. Alternativa robusta, se os resíduos forem ruins: ANOVA com transformação de postos alinhados (ART).
-- **H2 e H4:** Kruskal-Wallis sobre os valores **agregados por URL** (n = 6 por tipo), com tamanho de efeito **ε²** e post-hoc de Dunn. A acessibilidade é praticamente constante entre as repetições de uma URL, então as repetições não contam como amostras.
+  Os fatores usam codificação de soma (Sum), então o efeito principal de cada fator é estimado **na média dos outros fatores**, e não numa célula de referência. O efeito é relatado como **razão** (ex.: "o pico é 1,15× mais lento"), com IC de 95%. Alternativa robusta, se mais de 5% dos resíduos padronizados passarem de ±3 (critério fixado antes de olhar os p): modelo misto sobre postos alinhados (ART).
+- **H2 e H4:** Kruskal-Wallis sobre os valores **agregados por URL** (n = 6 por tipo), com tamanho de efeito **ε²** e post-hoc de Dunn. A acessibilidade é praticamente constante entre as repetições de uma URL, então as repetições não contam como amostras. O teste primário usa o perfil **móvel**, e o desktop é relatado como sensibilidade. A home fica fora dos testes.
 - **H5:** para cada URL com CrUX, compara a mediana sintética móvel com o p75 do CrUX:
   - Wilcoxon pareado e Spearman;
   - gráfico de Bland-Altman;
   - concordância de categoria (FAST/AVERAGE/SLOW) com kappa de Cohen.
 
   As URLs sem CrUX são listadas, e o valor da origem é usado só como referência.
-- **Comparações múltiplas:** correção de **Holm** sobre os 5 testes primários (α = 0,05). Os post-hoc também são corrigidos.
+- **Comparações múltiplas:** correção de **Holm** sobre os 5 testes primários (α = 0,05). Os post-hoc também são corrigidos. Todos os testes são **bilaterais**.
 - **Tamanhos de efeito:** razão (modelo misto), Cliff's delta ou r (2 níveis) e ε² (Kruskal-Wallis).
 - **Poder (Lab04):** a coleta tem duração fixa por causa do cronograma e da Black Friday, então a simulação **não define o nº de dias**. Ela estima o **efeito mínimo detectável** com n = 6 URLs por tipo e 7 dias, e esse número entra na discussão de validade de conclusão.
 
@@ -169,14 +169,14 @@ H1 é parcialmente verdadeira por construção, porque o perfil móvel aplica th
 - **`scripts/collect.py`** (Python) faz uma chamada por URL e perfil:
   - lê `config/urls.csv`, **sorteia a ordem** das URLs e chama `https://www.googleapis.com/pagespeedonline/v5/runPagespeed` com `category=performance&category=accessibility` para cada `strategy`;
   - em caso de erro, **tenta de novo dentro da própria execução** (até 2 vezes, com espera) e registra o nº de tentativas;
-  - grava uma linha por chamada em `data/raw/AAAA-MM-DD_BRT.csv`. O arquivo é nomeado pela data **BRT da janela**: as execuções de 20h07 e 22h07 de uma noite ficam no mesmo arquivo.
+  - grava uma linha por chamada em `data/raw/AAAA-MM-DD_BRT.csv`. O arquivo é nomeado pela data **BRT da janela**: as execuções de 20h07 e 22h07 de uma noite ficam no mesmo arquivo. A data e a janela (18h–23h59 = pico, 00h–07h59 = madrugada) são calculadas uma vez por execução, a partir do horário de início, em modo de acréscimo.
 - **Detecção de bloqueio:** compara `finalUrl`, status e título com o esperado. Captcha, redirecionamento para login ou página de erro marcam a linha como `bloqueada`.
 - **JSON bruto:** antes de compactar, **remove as auditorias com imagem** (`final-screenshot`, `screenshot-thumbnails`, `full-page-screenshot`), o que tira possíveis nomes de pessoas e reduz o tamanho.
   - O JSON é publicado como **artifact do GitHub Actions**, sem commit no git.
   - No fim da coleta, B junta todos os JSONs num `.zip` anexado a uma *release*.
   - Só os CSVs entram no repositório.
 - **Segredo:** a chave fica no secret `PSI_API_KEY` do GitHub e nunca no código.
-- **`.github/workflows/collect.yml`:** quatro crons em UTC (`7 23 * * *`, `7 1 * * *`, `7 6 * * *`, `7 8 * * *`) e `workflow_dispatch`. Faz commit dos CSVs no fim. O horário real de cada execução é gravado.
+- **`.github/workflows/collect.yml`:** quatro crons em UTC (`7 23 * * *`, `7 1 * * *`, `7 6 * * *`, `7 8 * * *`) e `workflow_dispatch`. Faz commit dos CSVs no fim. O horário real de cada execução é gravado. Disparos manuais gravam em `data/raw/testes/` e cada linha registra o `gatilho` (`schedule` ou `workflow_dispatch`); só `schedule` entra na análise.
 - **`scripts/validate.py`:** confere cobertura (38 linhas por execução), faltas, linhas bloqueadas, mudanças de `lighthouseVersion` e anomalias. Gera `data/processed/dataset.csv` e `docs/anomalias.md`.
 - **Política de substituição de URL:** se um produto esgotar ou sair do ar, o `collect.py` passa a usar a URL reserva pré-registrada **no mesmo slot**. A troca é marcada como anomalia, e a análise usa o slot como unidade. URLs de categoria e busca não são trocadas.
 - **Ética:**
@@ -245,11 +245,11 @@ O JSON bruto fica em artifacts do Actions e numa release, fora do git.
 
 Cada onda termina com um **artefato de passagem** que o próximo integrante usa sem precisar de quem saiu. Papéis fixos: **A = Planejamento e Método**, **B = Instrumentação e Operação**, **C = Análise e Impacto**. Todas as tarefas ficam como cartões no **GitHub Projects**.
 
-A coleta (GitHub Actions) roda sozinha em segundo plano a partir da onda 2 da S01, então ela continua mesmo durante as ondas de A e C.
+A coleta (GitHub Actions) roda sozinha em segundo plano a partir da onda 2 da S01, então ela continua mesmo durante as ondas de A e C. Enquanto ela roda (18/11–25/11), o dono da onda corrente faz uma checagem diária de 5 minutos: C de 19 a 21/11, A de 22 a 23/11 e B de 24 a 25/11. Qualquer falha é comunicada a B no mesmo dia.
 
 **Cronograma da disciplina:** S01 13/11–19/11 · S02 20/11–26/11 (20/11 é feriado) · S03 27/11–03/12 · **apresentação do grupo em 04/12**.
 
-**Entrega conjunta S01 + S02:** por causa do feriado e da extensão do trabalho, o grupo junta as duas entregas numa só, em **26/11**. É preciso **confirmar com o professor** que a entrega da S01 pode ser adiada. A sprint conjunta (16/11–26/11) tem dois ciclos A → B → C: o ciclo 1 prepara e liga a coleta, e o ciclo 2 valida e analisa. A coleta não muda de data, porque o fim dela é limitado pela Black Friday.
+**Entrega conjunta S01 + S02:** por causa do feriado e da extensão do trabalho, o grupo junta as duas entregas numa só, em **26/11**. A sprint conjunta (16/11–26/11) tem dois ciclos A → B → C: o ciclo 1 prepara e liga a coleta, e o ciclo 2 valida e analisa. A coleta não muda de data, porque o fim dela é limitado pela Black Friday.
 
 **Datas críticas**
 - Workflow **ligado até 18/11 às 20h07**.
@@ -263,7 +263,7 @@ A coleta (GitHub Actions) roda sozinha em segundo plano a partir da onda 2 da S0
 
 | Onda | Quem | Tarefas | Passa adiante |
 |---|---|---|---|
-| 1 (16–17/11) | A | Confirmar o tema com o professor. Criar o GitHub Projects. Tabela de evidências dos 3 critérios (§5.1). Pergunta, GQM, entidades/atributos/escalas, 7 categorias v1 e hipóteses (revisar §5.3–§5.7). Fonte para o horário de pico. Escolher as 19 URLs + reservas pelos critérios do §5.6. Registrar o `robots.txt` de cada host e os termos de uso | `docs/proposta.md`, `docs/evidencias.md`, `docs/etica.md`, `config/urls.csv` |
+| 1 (16–17/11) | A | Criar o GitHub Projects. Tabela de evidências dos 3 critérios (§5.1). Pergunta, GQM, entidades/atributos/escalas, 7 categorias v1 e hipóteses (revisar §5.3–§5.7). Fonte para o horário de pico. Escolher as 19 URLs + reservas pelos critérios do §5.6. Registrar o `robots.txt` de cada host e os termos de uso | `docs/proposta.md`, `docs/evidencias.md`, `docs/etica.md`, `config/urls.csv` |
 | 2 (17–18/11) | B | Chave da PSI + secret. `collect.py` (ordem sorteada, retry, detecção de bloqueio, remoção de imagens, artifact). Workflow **ligado até 18/11 20h07**. Disparos manuais de teste. Comparar algumas execuções no PSI web feitas do Brasil | Workflow ativo + `docs/dados.md` (dicionário de dados) |
 | 3 (19–21/11, inclui o feriado) | C | Descritiva do piloto incorporado (18/11 20h07 → 19/11 05h07). Checagem de bloqueios e variância. Simulação do efeito mínimo detectável (Lab04). Esqueleto do script de análise (modelo misto, Kruskal-Wallis, H5) rodando sobre o piloto. Seção "plano de coleta e análise + resultados do piloto" do documento de entrega | `analysis/piloto` + script de análise pronto para o dataset completo |
 
@@ -281,9 +281,9 @@ A apresentação é em 04/12, então a sprint Final está incorporada aqui. Cada
 
 | Onda | Quem | Tarefas | Passa adiante |
 |---|---|---|---|
-| 1 (27–28/11) | A | 7 categorias revisadas e justificadas. Ameaças finalizadas. Conclusões e limitações. Seções finais de método, categorias e validade | Seções de método e conclusões |
+| 1 (27–28/11) | A | 7 categorias revisadas e justificadas. Ameaças finalizadas. Limitações e conclusão "O que o estudo mostrou?". Seções finais de método, categorias e validade | Seções de método e conclusões |
 | 2 (29–30/11) | B | Fontes de impacto (audiência BR, % móvel, IBGE/PNAD) em `docs/impacto-fontes.md`. Seção de resultados. Tabela de reaproveitamento dos Labs (§5.12). README de reprodutibilidade. Exploração da Black Friday, se houver | Seções de resultados e reaproveitamento + README |
-| 3 (01–03/12) | C | Cálculo do impacto (espera e acessibilidade). Lista de "o que não é possível afirmar". Fechar o documento final. Apresentação de 10 min | Documento final + apresentação |
+| 3 (01–03/12) | C | Cálculo do impacto (espera e acessibilidade). Conclusão "O que isso significa para quem usa?". Lista de "o que não é possível afirmar". Fechar o documento final. Apresentação de 10 min | Documento final + apresentação |
 | 03/12 | Todos | Ensaio. Todos devem conseguir explicar qualquer parte | — |
 
 ## 8. Decisões a validar pelo grupo
@@ -298,4 +298,3 @@ A apresentação é em 04/12, então a sprint Final está incorporada aqui. Cada
 ## 9. Em aberto para o grupo
 
 - Quem é A, B e C. Por enquanto o documento usa só os papéis.
-- Confirmar com o professor a entrega conjunta S01 + S02 em 26/11.
