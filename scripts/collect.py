@@ -108,15 +108,11 @@ def _documento_principal(itens: list[dict], final_url: str) -> dict | None:
     return next((item for item in itens if item.get("resourceType") == "Document"), None)
 
 
-def _ttfb(audits: dict, documento: dict | None) -> tuple[float | None, str | None]:
-    """Obtém o TTFB e informa a origem, porque o Lighthouse 13 reorganizou as auditorias."""
+def _ttfb(audits: dict) -> tuple[float | None, str | None]:
+    """Obtém o TTFB observado. O valor de `metrics` é simulado e só serve de alternativa registrada."""
     valor = _valor(audits, "server-response-time")
     if valor is not None:
         return valor, "server-response-time"
-    if documento:
-        inicio, fim = documento.get("networkRequestTime"), documento.get("responseHeadersEndTime")
-        if inicio is not None and fim is not None:
-            return fim - inicio, "network-requests"
     itens = audits.get("metrics", {}).get("details", {}).get("items", []) or [{}]
     valor = itens[0].get("timeToFirstByte")
     return (valor, "metrics") if valor is not None else (None, None)
@@ -153,7 +149,7 @@ def extract_metrics(psi: dict) -> dict:
     final_url = lhr.get("mainDocumentUrl") or lhr.get("finalDisplayedUrl") or lhr.get("finalUrl") or ""
     itens = _itens_de_rede(audits)
     documento = _documento_principal(itens, final_url)
-    ttfb, ttfb_origem = _ttfb(audits, documento)
+    ttfb, ttfb_origem = _ttfb(audits)
     reprovadas = [
         ref["id"] for ref in acessibilidade.get("auditRefs", [])
         if audits.get(ref["id"], {}).get("score") == 0

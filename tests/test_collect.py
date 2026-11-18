@@ -149,13 +149,14 @@ def test_load_urls(tmp_path):
     assert slots[1].url_reserva == "https://a.com/r"
 
 
-def test_ttfb_usa_requisicao_observada_sem_server_response_time():
-    """O Lighthouse 13 pode não trazer a auditoria server-response-time."""
+def test_ttfb_registra_a_alternativa_sem_server_response_time():
     psi = fixture("psi_home_mobile.json")
-    del psi["lighthouseResult"]["audits"]["server-response-time"]
+    audits = psi["lighthouseResult"]["audits"]
+    del audits["server-response-time"]
+    audits["metrics"] = {"details": {"items": [{"timeToFirstByte": 602}]}}
     m = extract_metrics(psi)
-    assert m["ttfb_ms"] == pytest.approx(320.5)
-    assert m["ttfb_origem"] == "network-requests"
+    assert m["ttfb_ms"] == 602
+    assert m["ttfb_origem"] == "metrics"
 
 
 # --- Issue #9: chamada, bloqueio, reservas e execução ---

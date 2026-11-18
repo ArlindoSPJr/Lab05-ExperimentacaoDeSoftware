@@ -55,11 +55,12 @@ Cada linha de `data/raw/AAAA-MM-DD_BRT.csv` é uma chamada à API do PageSpeed I
 
 O coletor usa a primeira fonte disponível e grava qual foi em `ttfb_origem`:
 
-1. `server-response-time`: `audits[server-response-time].numericValue`;
-2. `network-requests`: `responseHeadersEndTime − networkRequestTime` do documento principal;
-3. `metrics`: `audits[metrics].details.items[0].timeToFirstByte`.
+1. `server-response-time`: `audits[server-response-time].numericValue`, valor observado no carregamento;
+2. `metrics`: `audits[metrics].details.items[0].timeToFirstByte`, valor simulado, usado só se a primeira fonte faltar.
 
-A análise de H3 deve conferir se `ttfb_origem` é a mesma em toda a coleta, porque as fontes não são equivalentes.
+A análise de H3 deve usar apenas linhas com `ttfb_origem = server-response-time`, porque as duas fontes não são equivalentes.
+
+O Lighthouse 13.6.0 não devolve o título da página na PSI, então `titulo` tende a ficar vazio. Nesse caso, o bloqueio é detectado pela URL final e pelo status HTTP.
 
 ## Controle da medição
 
