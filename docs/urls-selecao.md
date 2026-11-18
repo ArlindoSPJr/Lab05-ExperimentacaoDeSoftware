@@ -4,7 +4,7 @@ Este documento registra como as 19 URLs (+ reservas de produto) de `config/urls.
 
 - **Data da seleção:** 17/11/2026, com revisão das categorias em 18/11/2026 (navegador Chrome, **sem login**, a partir de Belo Horizonte/MG).
 - **Ritmo de acesso:** páginas abertas uma a uma, com ≥ 3 s entre carregamentos no navegador e 1,5 s a 2 s entre requisições `fetch`/`curl` (≤ 1 req/s), sem login e sem coleta de dados pessoais.
-- **Contrato do arquivo:** colunas `slot_id,tipo,url,url_reserva,host,mlb_id,criterio,data_selecao`, consumidas por `load_urls` do coletor (issue #8). `url_reserva` só é preenchida para produtos (design §8, "Política de substituição": URLs de categoria e busca não são trocadas). `mlb_id` só se aplica a produtos.
+- **Contrato do arquivo:** colunas `slot_id,tipo,url,url_reserva,host,mlb_id,criterio,data_selecao`, consumidas por `load_urls` do coletor (issue #8). `url_reserva` só é preenchida para produtos (design §5.9, "Política de substituição": URLs de categoria e busca não são trocadas). `mlb_id` só se aplica a produtos.
 
 ## Resumo
 
@@ -12,7 +12,7 @@ Este documento registra como as 19 URLs (+ reservas de produto) de `config/urls.
 |---|---|---|
 | Categoria | `cat-1` … `cat-6` | Completo |
 | Busca | `bus-1` … `bus-6` | Completo (URLs montadas pelo padrão; ver observações) |
-| Produto | `pro-1` … `pro-6` | **PENDENTE (preenchimento manual)**: lista "Mais vendidos" bloqueada por CAPTCHA para o agente |
+| Produto | `pro-1` … `pro-6` | Completo: seleção **manual pelo integrante A** em 18/11/2026, 16h43–17h00 BRT (o agente foi bloqueado por CAPTCHA). Listas de `pro-2` e `pro-6` a confirmar (seção 6) |
 | Home | `home` | Completo |
 
 ## 1. Categorias (`cat-1` … `cat-6`)
@@ -58,7 +58,7 @@ Passo a passo:
 
 ## 2. Busca (`bus-1` … `bus-6`)
 
-**Critério:** 1 termo genérico por categoria escolhida, sem filtros, no padrão `https://lista.mercadolivre.com.br/<termo>` (minúsculas, sem acentos, uma palavra). O termo é o nome genérico de um tipo de produto típico da categoria. É uma escolha de julgamento do grupo, registrada aqui para transparência. `url_reserva` fica **vazia**, porque URLs de busca não são substituídas durante a coleta (design §8).
+**Critério:** 1 termo genérico por categoria escolhida, sem filtros, no padrão `https://lista.mercadolivre.com.br/<termo>` (minúsculas, sem acentos, uma palavra). O termo é o nome genérico de um tipo de produto típico da categoria. É uma escolha de julgamento do grupo, registrada aqui para transparência. `url_reserva` fica **vazia**, porque URLs de busca não são substituídas durante a coleta (design §5.9, "Política de substituição").
 
 | Slot | Categoria | Termo |
 |---|---|---|
@@ -73,11 +73,11 @@ Passo a passo:
 
 **Evidência de que a busca abre sem login no PSI:** em 18/11/2026, às 16h15 BRT, o coordenador rodou o PageSpeed Insights (pagespeed.web.dev, perfil celular, Lighthouse 13.6.0) para `https://lista.mercadolivre.com.br/celular`. O Lighthouse renderizou a página de resultados real (lista de celulares com preços, com um banner "Abra o app"), e não um CAPTCHA. Também havia dados de campo (CrUX) para a URL. Os outros 5 termos não foram testados no PSI.
 
-## 3. Produto (`pro-1` … `pro-6`) — PENDENTE (preenchimento manual)
+## 3. Produto (`pro-1` … `pro-6`) — seleção manual (integrante A)
 
 **Critério:** o 1º item da lista "Mais vendidos" de cada uma das 6 categorias (`url`), com o 2º item da mesma lista como `url_reserva`.
 
-**Por que está pendente:** em 17/11/2026, as listas ranqueadas `https://www.mercadolivre.com.br/mais-vendidos/MLB<id>` levaram o navegador do agente a uma tela de CAPTCHA (`/captcha/wall`) duas vezes. O CAPTCHA não foi contornado. A página-índice `https://www.mercadolivre.com.br/mais-vendidos` abriu, mas seus carrosséis misturam itens "BLACK FRIDAY"/"OFERTA IMPERDÍVEL", não são o ranking e não incluem todas as 6 categorias. Por isso não foram usados.
+**Por que a seleção foi manual:** em 17/11/2026, as listas ranqueadas `https://www.mercadolivre.com.br/mais-vendidos/MLB<id>` levaram o navegador do agente a uma tela de CAPTCHA (`/captcha/wall`) duas vezes. O CAPTCHA não foi contornado. A página-índice `https://www.mercadolivre.com.br/mais-vendidos` abriu, mas seus carrosséis misturam itens "BLACK FRIDAY"/"OFERTA IMPERDÍVEL", não são o ranking e não incluem todas as 6 categorias. Por isso não foram usados.
 
 IDs de categoria vistos nos links "Ver mais" da página-índice em 17/11/2026: Celulares e Telefones = `MLB1051`, Eletrodomésticos = `MLB5726`, Esportes e Fitness = `MLB1276`, Ferramentas = `MLB263532`. IDs de Casa e Móveis e de Construção: **não encontrados** (não aparecem na página-índice; procurar como no passo 2 abaixo).
 
@@ -85,12 +85,12 @@ IDs de categoria vistos nos links "Ver mais" da página-índice em 17/11/2026: C
 
 1. Abrir `https://www.mercadolivre.com.br/mais-vendidos` em janela anônima (sem login).
 2. Para cada categoria (`pro-1` Celulares e Telefones, `pro-2` Casa e Móveis, `pro-3` Eletrodomésticos, `pro-4` Esportes e Fitness, `pro-5` Ferramentas, `pro-6` Construção), abrir a lista ranqueada da categoria: pelo link "Ver mais" da seção correspondente, ou pelo link "Mais vendidos" na página da categoria (`/c/<slug>`), ou pelo filtro de categoria da própria página. A lista correta mostra os itens numerados (1º, 2º, …) e tem URL `.../mais-vendidos/MLB<id>`. Se aparecer CAPTCHA, resolvê-lo manualmente.
-3. Clicar no **1º item** e copiar a URL **sem os parâmetros** após `?` e `#` → coluna `url`.
-4. Voltar, clicar no **2º item** e copiar a URL da mesma forma → coluna `url_reserva`.
-5. `mlb_id`: o ID MLB do 1º item gravado **exatamente como aparece na URL do anúncio, com ou sem hífen**. Exemplos: `produto.mercadolivre.com.br/MLB-1234567890-...` → `MLB-1234567890`; `www.mercadolivre.com.br/.../p/MLB12345678` → `MLB12345678`. Não normalizar (não tirar nem pôr hífen). O coletor (#9) troca o slot para a reserva quando o `final_url` não contém o `mlb_id` em 2 execuções seguidas, e essa busca é literal.
+3. Clicar no **1º item**, esperar a página terminar de carregar e copiar a URL **da barra de endereço** (não a do link da lista), **sem os parâmetros** após `?` e `#` → coluna `url`.
+4. Voltar, clicar no **2º item** e copiar a URL da barra de endereço da mesma forma → coluna `url_reserva`.
+5. `mlb_id`: o ID MLB do 1º item, tirado da mesma URL da barra de endereço depois do carregamento, gravado **exatamente como aparece na URL, com ou sem hífen**. **Conferir que o `mlb_id` aparece literalmente dentro da `url` gravada.** Exemplos: `produto.mercadolivre.com.br/MLB-1234567890-...` → `MLB-1234567890`; `www.mercadolivre.com.br/.../p/MLB12345678` → `MLB12345678`. Não normalizar (não tirar nem pôr hífen). O coletor (#9) troca o slot para a reserva quando o `final_url` não contém o `mlb_id` em 2 execuções seguidas, e essa busca é literal.
 6. `host`: o host da barra de endereço **depois** que a página do 1º item terminar de carregar (finalUrl), ex.: `www.mercadolivre.com.br` ou `produto.mercadolivre.com.br`.
 7. Conferir em janela anônima que as duas URLs abrem sem login.
-8. Substituir os `PENDENTE` da linha em `config/urls.csv`. Manter `data_selecao` como a data real do preenchimento e anotar aqui (seção 6) a data, a hora e o ID da categoria (`MLB<id>`) de cada lista usada.
+8. Substituir os `PENDENTE` da linha em `config/urls.csv`. Atualizar `data_selecao` para a data real do preenchimento e anotar aqui (seção 6) a data, a hora e o ID da categoria (`MLB<id>`) de cada lista usada.
 9. Commit com `Refs #5` (ou `Closes #5` se fechar a issue). Fazer isso **antes do início da coleta** (18/11, 20h07).
 
 ## 4. Home (`home`)
@@ -109,14 +109,19 @@ IDs de categoria vistos nos links "Ver mais" da página-índice em 17/11/2026: C
 - **Banner "Abra o app" (validade de construto).** No perfil móvel, a busca exibe um banner de convite para o app. Ele faz parte do que o usuário móvel recebe, mas pode afetar o LCP e as auditorias de acessibilidade. Registrar isso na seção de ameaças à validade (construto).
 - **Período promocional.** Em 17/11/2026 o site já exibia selos "BLACK FRIDAY". A seleção de produtos depende do ranking do dia, e o ranking muda com as promoções.
 - **robots.txt:** a checagem destas URLs contra o `robots.txt` é feita na issue #6 (ética).
+- **Nenhum agente de IA abre páginas do ML a partir de 18/11/2026.** A issue #6 encontrou no `robots.txt` do Mercado Livre `Disallow: /` para os agentes ClaudeBot/Claude-User (ver `docs/etica.md`). Por isso, a partir de 18/11/2026, nenhum agente de IA do projeto acessa páginas de `mercadolivre.com.br`, nem para conferir. As verificações no navegador descritas nas seções 1 e 4 (17 e 18/11, antes desse achado) não serão repetidas por agentes. A **seleção dos produtos (seção 6) foi 100% humana**: o integrante A abriu as listas e copiou as URLs, e o agente só gravou os dados recebidos, sem abrir as URLs.
 
 ## 6. Registro do preenchimento manual dos produtos
 
-| Slot | Data/hora | Lista usada (`MLB<id>`) | Observações |
-|---|---|---|---|
-| `pro-1` | PENDENTE | `MLB1051` (a confirmar) | |
-| `pro-2` | PENDENTE | não encontrado | |
-| `pro-3` | PENDENTE | `MLB5726` (a confirmar) | |
-| `pro-4` | PENDENTE | `MLB1276` (a confirmar) | |
-| `pro-5` | PENDENTE | `MLB263532` (a confirmar) | |
-| `pro-6` | PENDENTE | não encontrado | |
+Seleção feita **manualmente pelo integrante A**, no navegador, em **18/11/2026, entre 16h43 e 17h00 BRT**, a partir das listas "Mais vendidos" (passo a passo da seção 3). O agente gravou em `config/urls.csv` os dados recebidos do coordenador exatamente como informados, **sem abrir as URLs** (ver seção 5). `data_selecao` = `2026-11-18` nas 6 linhas de produto.
+
+| Slot | Categoria | Data/hora (BRT) | Lista usada | `mlb_id` | Observações |
+|---|---|---|---|---|---|
+| `pro-1` | Celulares e Telefones | 18/11/2026, entre 16h43 e 17h00 (hora exata não informada) | `MLB1051` | `MLB54982411` | Catálogo `/p/`; reserva `/p/MLB54961556` |
+| `pro-2` | Casa e Móveis | 18/11/2026, 16h44 | **a confirmar pelo integrante A** | `MLB-5365991654` | O 1º item é **anúncio** em `produto.mercadolivre.com.br` (`mlb_id` com hífen, como aparece na URL). Reserva em catálogo `/p/MLB70374494` |
+| `pro-3` | Eletrodomésticos | 18/11/2026, 16h45 | `MLB5726` (informado como "a confirmar") | `MLB50376945` | Catálogo `/p/`; reserva `/p/MLB27080589` |
+| `pro-4` | Esportes e Fitness | 18/11/2026, 16h46 | `MLB1276` (informado como "a confirmar") | `MLB25929487` | Catálogo `/p/`; reserva `/p/MLB19603205` |
+| `pro-5` | Ferramentas | 18/11/2026, 16h47 | `MLB263532` (informado como "a confirmar") | `MLB30144703` | Catálogo `/p/`; reserva `/p/MLB25371983`. A `url_reserva` foi colada com o fragmento `#polycard_client=search_best-seller...`, que o coordenador removeu |
+| `pro-6` | Construção | 18/11/2026, 16h48 | **a confirmar pelo integrante A** | `MLB15480157` | Catálogo `/p/`. A `url_reserva` é uma página **`/up/` (user product)**, ID `MLBU3319410517`, em formato diferente de `/p/` |
+
+**Nota para o coletor (#9):** se `pro-6` for trocado para a reserva, o identificador a procurar no `final_url` é **`MLBU3319410517`** (não um `MLB<n>` de catálogo). Para `pro-2`, a busca literal é por `MLB-5365991654`, com hífen.
