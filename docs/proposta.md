@@ -149,7 +149,11 @@ Os crons ficam no minuto **:07**, e não na hora cheia, para evitar a fila do Gi
 - Os gráficos do IX.br são **dinâmicos** (janela móvel de 24 h e de 7 dias). Os números acima são os da data e hora do acesso (18/11/2026, por volta das 16h30 BRT).
 - O eixo do gráfico não informa o fuso. Ele foi interpretado como horário de Brasília porque a hora da "Última Atualização" (16:00) bate com o horário local (BRT) do acesso e com a borda direita do gráfico.
 
-> **Pendência para o integrante A:** salvar uma cópia dos dois gráficos do IX.br (ex.: `docs/img/ixbr-diario-2026-11-18.png` e `docs/img/ixbr-semanal-2026-11-18.png`), já que as imagens publicadas mudam a cada atualização. As imagens ainda não foram versionadas.
+**Cópias versionadas dos gráficos** (baixadas em 18/11/2026, por volta das 16h30 BRT, as mesmas de onde saíram os números acima), porque as imagens publicadas mudam a cada atualização:
+
+![Tráfego agregado do IX.br — diário (17/11 16h a 18/11 16h)](img/ixbr-diario-2026-11-18.png)
+
+![Tráfego agregado do IX.br — semanal (11/11 a 18/11/2026)](img/ixbr-semanal-2026-11-18.png)
 
 ## Hipóteses
 
