@@ -1,0 +1,20 @@
+slot_id,tipo,url,url_reserva,host,mlb_id,criterio,data_selecao
+cat-1,categoria,https://www.mercadolivre.com.br/c/celulares-e-telefones,,www.mercadolivre.com.br,,"Menu Categorias, posição 3 (Tecnologia, sem página própria): 1ª subcategoria do painel Tecnologia",2026-11-17
+cat-2,categoria,https://www.mercadolivre.com.br/c/casa-moveis-e-decoracao,,www.mercadolivre.com.br,,"Menu Categorias, posição 4 (1ª entrada com página /c/ válida)",2026-11-17
+cat-3,categoria,https://www.mercadolivre.com.br/c/eletrodomesticos,,www.mercadolivre.com.br,,"Menu Categorias, posição 5",2026-11-17
+cat-4,categoria,https://www.mercadolivre.com.br/c/esportes-e-fitness,,www.mercadolivre.com.br,,"Menu Categorias, posição 6",2026-11-17
+cat-5,categoria,https://www.mercadolivre.com.br/c/industria-e-comercio,,www.mercadolivre.com.br,,"Menu Categorias, posição 9 (Ferramentas e Construção, posições 7-8, redirecionam para a home)",2026-11-17
+cat-6,categoria,https://www.mercadolivre.com.br/c/animais,,www.mercadolivre.com.br,,"Menu Categorias, posição 11 - Pet Shop (Para seu Negócio, posição 10, é /e/ e não /c/)",2026-11-17
+bus-1,busca,https://lista.mercadolivre.com.br/celular,https://lista.mercadolivre.com.br/smartphone,lista.mercadolivre.com.br,,"Termo genérico de 1 palavra para cat-1 (Celulares e Telefones), sem filtros; host pelo padrão da URL (não aberta pelo agente)",2026-11-17
+bus-2,busca,https://lista.mercadolivre.com.br/sofa,https://lista.mercadolivre.com.br/mesa,lista.mercadolivre.com.br,,"Termo genérico de 1 palavra para cat-2 (Casa e Móveis), sem filtros; host pelo padrão da URL (não aberta pelo agente)",2026-11-17
+bus-3,busca,https://lista.mercadolivre.com.br/geladeira,https://lista.mercadolivre.com.br/fogao,lista.mercadolivre.com.br,,"Termo genérico de 1 palavra para cat-3 (Eletrodomésticos), sem filtros; host pelo padrão da URL (não aberta pelo agente)",2026-11-17
+bus-4,busca,https://lista.mercadolivre.com.br/bicicleta,https://lista.mercadolivre.com.br/esteira,lista.mercadolivre.com.br,,"Termo genérico de 1 palavra para cat-4 (Esportes e Fitness), sem filtros; host pelo padrão da URL (não aberta pelo agente)",2026-11-17
+bus-5,busca,https://lista.mercadolivre.com.br/embalagem,https://lista.mercadolivre.com.br/balanca,lista.mercadolivre.com.br,,"Termo genérico de 1 palavra para cat-5 (Indústria e Comércio), sem filtros; host pelo padrão da URL (não aberta pelo agente)",2026-11-17
+bus-6,busca,https://lista.mercadolivre.com.br/racao,https://lista.mercadolivre.com.br/coleira,lista.mercadolivre.com.br,,"Termo genérico de 1 palavra para cat-6 (Pet Shop), sem filtros; host pelo padrão da URL (não aberta pelo agente)",2026-11-17
+pro-1,produto,PENDENTE,PENDENTE,PENDENTE,PENDENTE,"1º item de Mais vendidos de Celulares e Telefones; reserva = 2º item (preenchimento manual, ver docs/urls-selecao.md)",2026-11-17
+pro-2,produto,PENDENTE,PENDENTE,PENDENTE,PENDENTE,"1º item de Mais vendidos de Casa e Móveis; reserva = 2º item (preenchimento manual, ver docs/urls-selecao.md)",2026-11-17
+pro-3,produto,PENDENTE,PENDENTE,PENDENTE,PENDENTE,"1º item de Mais vendidos de Eletrodomésticos; reserva = 2º item (preenchimento manual, ver docs/urls-selecao.md)",2026-11-17
+pro-4,produto,PENDENTE,PENDENTE,PENDENTE,PENDENTE,"1º item de Mais vendidos de Esportes e Fitness; reserva = 2º item (preenchimento manual, ver docs/urls-selecao.md)",2026-11-17
+pro-5,produto,PENDENTE,PENDENTE,PENDENTE,PENDENTE,"1º item de Mais vendidos de Indústria e Comércio; reserva = 2º item (preenchimento manual, ver docs/urls-selecao.md)",2026-11-17
+pro-6,produto,PENDENTE,PENDENTE,PENDENTE,PENDENTE,"1º item de Mais vendidos de Pet Shop; reserva = 2º item (preenchimento manual, ver docs/urls-selecao.md)",2026-11-17
+home,home,https://www.mercadolivre.com.br/,,www.mercadolivre.com.br,,Home do ML (referência descritiva; única URL possível; sem reserva),2026-11-17
