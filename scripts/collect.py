@@ -224,6 +224,9 @@ def strip_screenshots(psi: dict) -> dict:
     audits = lhr.get("audits") or {}
     for nome in AUDITORIAS_DE_IMAGEM:
         audits.pop(nome, None)
+    for categoria in (lhr.get("categories") or {}).values():
+        if "auditRefs" in categoria:
+            categoria["auditRefs"] = [ref for ref in categoria["auditRefs"] if ref.get("id") not in AUDITORIAS_DE_IMAGEM]
     return psi
 
 

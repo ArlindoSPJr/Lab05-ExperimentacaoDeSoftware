@@ -225,6 +225,7 @@ def test_strip_screenshots():
     psi = {
         "lighthouseResult": {
             "fullPageScreenshot": {"screenshot": {"data": "x"}},
+            "categories": {"performance": {"auditRefs": [{"id": "final-screenshot"}, {"id": "speed-index"}]}},
             "audits": {
                 "final-screenshot": {},
                 "screenshot-thumbnails": {},
@@ -236,6 +237,7 @@ def test_strip_screenshots():
     limpo = strip_screenshots(psi)
     assert list(limpo["lighthouseResult"]["audits"]) == ["speed-index"]
     assert "fullPageScreenshot" not in limpo["lighthouseResult"]
+    assert limpo["lighthouseResult"]["categories"]["performance"]["auditRefs"] == [{"id": "speed-index"}]
 
 
 def test_slot_usa_reserva():

@@ -45,7 +45,9 @@ def main() -> int:
     args = parser.parse_args()
 
     if args.derivar_apenas:
-        derivar(json.loads((PASTA / "psi_home_mobile.json").read_text(encoding="utf-8")))
+        base = strip_screenshots(json.loads((PASTA / "psi_home_mobile.json").read_text(encoding="utf-8")))
+        salvar("psi_home_mobile.json", base)
+        derivar(base)
         return 0
 
     chave = os.environ.get("PSI_API_KEY")
