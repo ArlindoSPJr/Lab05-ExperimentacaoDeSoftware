@@ -4,7 +4,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository status
 
-The repository is new. It has no code, build system, or tests yet. The only source of truth is `Lab05Medicao.pdf`, the assignment statement for "Lab05 — Experimento em Software Real" (Laboratório de Experimentação de Software, Engenharia de Software, PUC Minas). It is written in Portuguese, and deliverables (documents, slides, reports) should be in Portuguese unless the user says otherwise. Update this file once a software target, language, and tooling are chosen.
+`Lab05Medicao.pdf` is the assignment statement for "Lab05 — Experimento em Software Real" (Laboratório de Experimentação de Software, Engenharia de Software, PUC Minas). It is written in Portuguese, and deliverables (documents, slides, reports) should be in Portuguese unless the user says otherwise.
+
+The chosen study is the **performance and accessibility of the Mercado Livre website**, measured from outside through the PageSpeed Insights API on a GitHub Actions schedule. Sources of truth:
+- Design: `docs/superpowers/specs/2026-11-16-mercadolivre-desempenho-acessibilidade-design.md`
+- Issues by wave and sprint: `docs/superpowers/plans/2026-11-16-issues-ondas.md`, mirrored as GitHub issues on the Kanban https://github.com/users/ArlindoSPJr/projects/7
+
+## Workflow rules
+
+- **Every commit must reference its GitHub issue** by number in the message, e.g. `Refs #5`. The commit that completes an issue uses `Closes #5`. The issue-to-number map is in each issue's title (`[A-4]` etc.).
+- Work moves in sequential waves A → B → C. Issues start in **Backlog** and move to **Ready** only once all their dependencies are done (the end of the previous wave).
 
 ## What this project is
 
