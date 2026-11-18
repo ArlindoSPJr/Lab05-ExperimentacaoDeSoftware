@@ -12,7 +12,7 @@ The chosen study is the **performance and accessibility of the Mercado Livre web
 
 ## Workflow rules
 
-- **Every commit must reference its GitHub issue** by number in the message, e.g. `Refs #5`. The commit that completes an issue uses `Closes #5`. The issue-to-number map is in each issue's title (`[A-4]` etc.).
+- **Every commit must reference its GitHub issue** by number in the message, e.g. `Refs #5`. The Pull Request that completes an issue carries `Closes #5` in its description; commits use only `Refs #N`. The issue-to-number map is in each issue's title (`[A-4]` etc.).
 - Work moves in sequential waves A → B → C. Issues start in **Backlog** and move to **Ready** only once all their dependencies are done (the end of the previous wave).
 
 ## What this project is

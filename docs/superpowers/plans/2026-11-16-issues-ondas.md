@@ -34,7 +34,7 @@
 - A chave da API fica só no secret `PSI_API_KEY`.
 - As notas da PSI vêm na escala 0–1 (o §5.4 fala em 0–100). A escala fica declarada no dicionário de dados.
 - Entrega conjunta S01 + S02 em **26/11**. Apresentação em **04/12** e ensaio em **03/12**.
-- **Todo commit referencia a sua issue do GitHub** pelo número, com `Refs #N`. O commit que conclui a issue usa `Closes #N`. Onde aparece "commit" nas issues abaixo, vale esta regra.
+- **Todo commit referencia a sua issue do GitHub** pelo número, com `Refs #N`. O `Closes #N` vai só na descrição do Pull Request que conclui a issue; os commits usam apenas `Refs #N`. Onde aparece "commit" nas issues abaixo, vale esta regra.
 
 ## Pontos de atenção (falhas prováveis sem teste explícito)
 
