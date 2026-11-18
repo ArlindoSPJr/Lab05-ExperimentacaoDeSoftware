@@ -1,0 +1,73 @@
+{
+  "_sintetica": "Fixture provisoria escrita a mao, sem chamar a PSI. Substituir com: python scripts/gerar_fixtures.py",
+  "id": "https://www.mercadolivre.com.br/",
+  "loadingExperience": {
+    "id": "https://www.mercadolivre.com.br/",
+    "metrics": {
+      "LARGEST_CONTENTFUL_PAINT_MS": { "percentile": 2600, "category": "AVERAGE" },
+      "INTERACTION_TO_NEXT_PAINT": { "percentile": 210, "category": "AVERAGE" },
+      "CUMULATIVE_LAYOUT_SHIFT_SCORE": { "percentile": 5, "category": "FAST" }
+    },
+    "overall_category": "AVERAGE"
+  },
+  "originLoadingExperience": {
+    "id": "https://www.mercadolivre.com.br",
+    "metrics": {
+      "LARGEST_CONTENTFUL_PAINT_MS": { "percentile": 2800, "category": "AVERAGE" }
+    },
+    "overall_category": "AVERAGE"
+  },
+  "lighthouseResult": {
+    "requestedUrl": "https://www.mercadolivre.com.br/",
+    "mainDocumentUrl": "https://www.mercadolivre.com.br/",
+    "finalDisplayedUrl": "https://www.mercadolivre.com.br/",
+    "lighthouseVersion": "13.6.0",
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.0.0 Safari/537.36",
+    "environment": { "hostUserAgent": "HeadlessChrome" },
+    "configSettings": {
+      "throttling": { "rttMs": 150, "throughputKbps": 1638.4, "cpuSlowdownMultiplier": 4 }
+    },
+    "categories": {
+      "performance": { "score": 0.55 },
+      "accessibility": {
+        "score": 0.88,
+        "auditRefs": [
+          { "id": "color-contrast", "weight": 7 },
+          { "id": "image-alt", "weight": 10 },
+          { "id": "label", "weight": 7 },
+          { "id": "aria-roles", "weight": 7 }
+        ]
+      }
+    },
+    "audits": {
+      "largest-contentful-paint": { "numericValue": 4200.5 },
+      "first-contentful-paint": { "numericValue": 1800.25 },
+      "speed-index": { "numericValue": 5100.75 },
+      "total-blocking-time": { "numericValue": 640 },
+      "server-response-time": { "numericValue": 320.5 },
+      "total-byte-weight": { "numericValue": 2450000 },
+      "network-requests": {
+        "details": {
+          "items": [
+            {
+              "url": "https://www.mercadolivre.com.br/",
+              "resourceType": "Document",
+              "statusCode": 200,
+              "networkRequestTime": 10,
+              "responseHeadersEndTime": 330.5
+            },
+            {
+              "url": "https://http2.mlstatic.com/app.js",
+              "resourceType": "Script",
+              "statusCode": 200
+            }
+          ]
+        }
+      },
+      "color-contrast": { "score": 0 },
+      "image-alt": { "score": 1 },
+      "label": { "score": 0 },
+      "aria-roles": { "score": null }
+    }
+  }
+}

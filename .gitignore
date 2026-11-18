@@ -1,0 +1,11 @@
+# JSONs brutos da PSI: nunca entram no git (design §5.9)
+out/
+*.zip
+
+# Python
+__pycache__/
+.pytest_cache/
+.venv/
+
+# Segredos
+.env
