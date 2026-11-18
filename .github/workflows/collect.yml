@@ -1,0 +1,79 @@
+name: Coleta PSI
+
+on:
+  schedule:
+    # Horários em UTC: 20h07, 22h07, 03h07 e 05h07 BRT
+    - cron: "7 23 * * *"
+    - cron: "7 1 * * *"
+    - cron: "7 6 * * *"
+    - cron: "7 8 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Uma execução por vez: a seguinte espera a atual terminar.
+concurrency:
+  group: coleta-psi
+  cancel-in-progress: false
+
+jobs:
+  coletar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar dependências
+        run: pip install -r requirements.txt
+
+      - name: Definir destino dos dados
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            echo "DESTINO=data/raw" >> "$GITHUB_ENV"
+            echo "ESTADO=data/estado_reservas.json" >> "$GITHUB_ENV"
+          else
+            # Disparos manuais não entram na análise nem alteram as reservas da coleta.
+            echo "DESTINO=data/raw/testes" >> "$GITHUB_ENV"
+            echo "ESTADO=data/raw/testes/estado_reservas.json" >> "$GITHUB_ENV"
+          fi
+
+      - name: Coletar
+        env:
+          PSI_API_KEY: ${{ secrets.PSI_API_KEY }}
+          GATILHO: ${{ github.event_name }}
+          CRON: ${{ github.event.schedule }}
+        run: python scripts/collect.py --urls config/urls.csv --out "$DESTINO" --json out/json --estado "$ESTADO"
+
+      - name: Publicar JSONs brutos
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: json-${{ github.run_id }}-${{ github.run_attempt }}
+          path: out/json/
+          retention-days: 90
+          if-no-files-found: warn
+
+      - name: Versionar os CSVs
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/raw
+          if [ -f data/estado_reservas.json ]; then git add data/estado_reservas.json; fi
+          if git diff --cached --quiet; then
+            echo "Nada novo para versionar."
+            exit 0
+          fi
+          git commit -m "Registra coleta ${{ github.event_name }} ${{ github.run_id }}" -m "Refs #10"
+          for tentativa in 1 2 3 4 5; do
+            git pull --rebase origin main && git push origin HEAD:main && exit 0
+            sleep $((tentativa * 10))
+          done
+          echo "Não foi possível enviar os dados." >&2
+          exit 1

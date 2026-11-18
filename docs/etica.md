@@ -227,6 +227,7 @@ Consequências para o estudo:
 - **Coleta:** não é afetada. Quem carrega as páginas é o PSI, não o Claude (seção 4).
 - **Seleção das URLs (#5) e esta tarefa:** um agente Claude abriu páginas do ML pelo Chrome do integrante em 17 e 18/11/2026. O Chrome envia o User-Agent normal do navegador, e não `Claude-User`. Mesmo assim, o pedido do site, no espírito, alcança esse uso. Páginas abertas pelo agente: home, as 6 `/c/…`, `/mais-vendidos`, `/mais-vendidos/MLB1051` (CAPTCHA), `lista.mercadolivre.com.br/celular` (CAPTCHA), os 3 `robots.txt` nesta tarefa, e ainda alguns `curl`/`fetch` de status.
 - **Decisão adotada nesta tarefa:** depois dos 3 `robots.txt`, nenhuma outra página do ML foi aberta pelo agente. Por isso os Termos e Condições do ML não foram lidos no site oficial (seção 6.1).
+- **Uso autorizado em 18/11/2026, 19h13 BRT (issue #7):** o integrante B autorizou um agente de IA a fazer 1 chamada à API da PSI para a home (`https://www.mercadolivre.com.br/`, perfil móvel), para gerar as fixtures de teste. Quem carregou a página foi a infraestrutura do Google, e o agente não abriu o site diretamente. Esse uso também deve constar nas limitações do documento final.
 - **Recomendação ao grupo (a decidir pelo coordenador):** daqui em diante, nenhum agente de IA abre páginas do ML. O que for preciso ver no site (produtos, termos) é feito por um integrante, à mão. O documento final declara esse uso nas limitações, com as datas acima.
 
 ## 6. Termos de uso
