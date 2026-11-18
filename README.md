@@ -43,8 +43,8 @@ O detalhamento por onda e as datas críticas da coleta estão no §7 do design.
 ## Regra de commit
 
 - Toda mensagem de commit referencia a issue do GitHub pelo número, com `Refs #N`.
-- `Closes #N` só aparece no PR que conclui a issue.
+- `Closes #N` só no PR que conclui a issue; commits usam `Refs #N`.
 
 ## Como reproduzir
 
-Em construção. Esta seção será escrita na issue #31 (B-11).
+Em construção. Esta seção será escrita na issue #30 (B-11).
