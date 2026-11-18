@@ -180,7 +180,7 @@ def extract_metrics(psi: dict) -> dict:
 
 def call_psi(url: str, strategy: str, api_key: str, session, max_retries: int = 2, espera_s: float = 5,
              sleep=time.sleep) -> tuple[dict | None, int, str | None]:
-    """Chama a PSI com novas tentativas em 429, 5xx e falha de rede. Devolve (json, tentativas, erro)."""
+    """Chama a PSI com até 2 novas tentativas em caso de erro. Devolve (json, tentativas, erro)."""
     parametros = [
         ("url", url), ("strategy", strategy), ("category", "PERFORMANCE"),
         ("category", "ACCESSIBILITY"), ("key", api_key),
@@ -196,7 +196,7 @@ def call_psi(url: str, strategy: str, api_key: str, session, max_retries: int = 
             if resposta.status_code == 200:
                 return resposta.json(), tentativa, None
             erro = str(resposta.status_code)
-            if resposta.status_code != 429 and resposta.status_code < 500:
+            if resposta.status_code in (401, 403):  # chave recusada: repetir não resolve
                 return None, tentativa, erro
         if tentativa <= max_retries:
             sleep(espera_s)

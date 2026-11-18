@@ -173,6 +173,17 @@ def test_call_psi_retry_sucesso():
     assert psi == {"ok": True} and tentativas == 2 and erro is None
 
 
+def test_call_psi_repete_erro_400_temporario():
+    sessao = SessaoRoteirizada([Resposta(400), Resposta(200, {"ok": True})])
+    psi, tentativas, erro = call_psi("https://a.com", "mobile", "k", sessao, sleep=lambda _: None)
+    assert psi == {"ok": True} and tentativas == 2 and erro is None
+
+
+def test_call_psi_nao_repete_chave_recusada():
+    sessao = SessaoRoteirizada([Resposta(403)])
+    assert call_psi("https://a.com", "mobile", "k", sessao, sleep=lambda _: None) == (None, 1, "403")
+
+
 def test_call_psi_parametros():
     sessao = SessaoRoteirizada([Resposta(200, {})])
     call_psi("https://a.com", "desktop", "k", sessao, sleep=lambda _: None)
