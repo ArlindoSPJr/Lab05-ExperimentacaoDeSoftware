@@ -99,12 +99,12 @@ Na versão 2011, a acessibilidade era subcaracterística de *usabilidade*. A ver
 
 **Objetos.** A unidade experimental para o fator tipo de página é a **URL**: 6 URLs por tipo, escolhidas por critério explícito e registradas em `config/urls.csv` (item #A-4 do arquivo de issues).
 
-| Tipo | Critério de seleção (6 URLs) |
-|---|---|
-| Categoria | As 6 categorias de maior destaque no menu principal do ML |
-| Busca | 1 termo genérico por categoria escolhida, sem filtros |
-| Produto | O 1º item de "Mais vendidos" de cada categoria, mais 1 URL reserva por produto, registrada antes da coleta |
-| Home (referência) | Apenas `https://www.mercadolivre.com.br/`. Não entra nos testes de tipo de página |
+| Tipo | Critério de seleção (6 URLs) | Host |
+|---|---|---|
+| Categoria | As 6 categorias de maior destaque no menu principal do ML (registrar a captura do menu e a data) | www.mercadolivre.com.br |
+| Busca | 1 termo genérico por categoria escolhida (ex.: "celular", "notebook"), sem filtros | lista.mercadolivre.com.br |
+| Produto | O 1º item de "Mais vendidos" de cada uma das 6 categorias, mais 1 URL reserva por produto, também registrada antes da coleta | www.mercadolivre.com.br / produto.mercadolivre.com.br |
+| Home (referência) | Apenas `https://www.mercadolivre.com.br/`. Não entra nos testes de tipo de página | www.mercadolivre.com.br |
 
 **Fatores e níveis** (fatorial 3 × 2 × 2, mais a home como referência descritiva):
 
@@ -113,6 +113,8 @@ Na versão 2011, a acessibilidade era subcaracterística de *usabilidade*. A ver
 | Tipo de página | categoria, busca, produto |
 | Perfil de dispositivo | perfil **móvel** do Lighthouse (4G lento simulado + CPU 4× mais lenta) × perfil **desktop** (parâmetro `strategy` da PSI) |
 | Horário | pico (20h07 e 22h07 BRT) × madrugada (03h07 e 05h07 BRT) |
+
+Os crons ficam no minuto **:07**, e não na hora cheia, para evitar a fila do GitHub Actions, que é mais carregada no início de cada hora. O horário real de cada execução é gravado em todas as linhas (design §5.6 e §5.9).
 
 **Variáveis:**
 - **Dependentes:** LCP, TTFB e nº de auditorias de acessibilidade reprovadas (primárias); FCP, Speed Index, TBT, bytes, requisições e notas (descritivas).
@@ -123,29 +125,31 @@ Na versão 2011, a acessibilidade era subcaracterística de *usabilidade*. A ver
 
 ## Horário de pico
 
-**Decisão:** o nível "pico" do fator horário usa execuções às **20h07 e 22h07 BRT**, e o nível de baixa demanda usa **03h07 e 05h07 BRT**. Na classificação das execuções, a janela de pico vai de 18h a 23h59 e a de madrugada de 00h a 07h59 (BRT), calculadas pelo horário de início de cada execução.
+**Decisão:** o nível "pico" do fator horário usa execuções às **20h07 e 22h07 BRT**, e o nível de baixa demanda usa **03h07 e 05h07 BRT**. Na classificação das execuções, a janela de pico vai de 18h a 23h59 e a de madrugada de 00h a 07h59 (BRT); os demais horários formam a janela **fora**, excluída da análise. A janela é calculada pelo horário de início de cada execução.
 
 **Fonte principal: tráfego agregado do IX.br (NIC.br).**
-- Página: "Tráfego total (Todos IX.br)", <https://ix.br/agregado/>, com o gráfico diário em <https://old.ix.br/images/pix/agregado_bps1-daily1.png> e o semanal em <https://old.ix.br/images/pix/agregado_bps1-weekly1.png>. Acesso em **17/11/2026, por volta das 21h58** (página com "Última Atualização: 2026-11-17 21:00").
+- Página: "Tráfego total (Todos IX.br)", <https://ix.br/agregado/>, com o gráfico diário em <https://old.ix.br/images/pix/agregado_bps1-daily1.png> e o semanal em <https://old.ix.br/images/pix/agregado_bps1-weekly1.png>. Acesso em **18/11/2026, por volta das 16h30 BRT** (página com "Última Atualização: 2026-11-18 16:00").
 - O IX.br é o conjunto de pontos de troca de tráfego (PTTs) mantido pelo NIC.br, por onde passa o tráfego entre provedores de acesso e de conteúdo no Brasil.
-- **O que o gráfico diário mostrou na data de acesso** (leitura visual, valores aproximados, exceto os números impressos no gráfico):
-  - o **pico diário** fica entre 20h e 22h, com o máximo por volta das 21h. O máximo das últimas 24 h impresso no gráfico é **53,21 Tbps** no total, e o valor atual (por volta das 21h) é **50,93 Tbps**;
-  - o **vale** fica por volta das 04h, em cerca de 10–11 Tbps (leitura visual), ou seja, perto de 1/5 do pico;
-  - a média impressa das últimas 24 h é **32,72 Tbps**.
-- **O gráfico semanal** (11/11 a 17/11/2026) mostra o mesmo padrão em todos os dias: um pico por noite, com máximo da semana de **53,10 Tbps** e média de **31,37 Tbps** (valores impressos), e um vale de madrugada em todos os dias.
+- **Gráfico diário** (janela de 17/11 16h a 18/11 16h):
+  - valores impressos no gráfico, para o total: Max **46,20 Tbps** e Avg **28,66 Tbps**;
+  - leitura visual (aproximada): o **pico** de 17/11 fica entre 20h e 22h, com o máximo por volta das 21h, em cerca de 45 Tbps; o **vale** fica por volta das 04h, em cerca de 10 Tbps, ou seja, entre 1/4 e 1/5 do pico.
+- **Gráfico semanal** (11/11 a 18/11/2026):
+  - valores impressos no gráfico: Maximum **47,93 Tbps** e Average **28,60 Tbps**;
+  - leitura visual: o mesmo padrão em todos os dias, com um pico por noite e um vale de madrugada.
 - **Conclusão para o estudo:** 20h07 e 22h07 caem na faixa de maior tráfego do dia, e 03h07 e 05h07 caem perto do vale. Isso sustenta a escolha dos dois níveis.
 
 **Fonte complementar: hábito de compra online.**
-- A pesquisa *E-commerce Trends 2026* (Octadesk com Opinion Box, mais de 2.000 respondentes, margem de erro de 2,2 p.p.) informa que **56%** dos consumidores preferem comprar à noite ou de madrugada. Fontes: Meio & Mensagem, "IA já impacta consumo e maioria compra à noite", 08/08/2025, <https://www.meioemensagem.com.br/marketing/ia-ja-impacta-consumo-e-maioria-compra-a-noite>; Forbes Brasil, 30/07/2025, <https://forbes.com.br/forbes-money/2025/07/mais-da-metade-dos-brasileiros-compra-online-durante-a-noite-ou-de-madrugada/> (acesso em 17/11/2026).
-- Essa pesquisa **não** informa a hora exata, só o período ("noite ou madrugada"). Ela reforça que a noite é um período de uso relevante para e-commerce, mas não basta sozinha para fixar 20h–22h.
+- Meio & Mensagem, "IA já impacta consumo e maioria compra à noite, diz pesquisa", 08/08/2025, <https://www.meioemensagem.com.br/marketing/ia-ja-impacta-consumo-e-maioria-compra-a-noite> (acesso em 17/11/2026). Ela divulga a pesquisa *E-commerce Trends 2026* (Octadesk com Opinion Box, mais de 2.000 consumidores, margem de erro de 2,2 p.p.), segundo a qual **56%** **preferem** realizar compras à noite ou durante a madrugada.
+- Forbes Brasil, "Comportamento: Mais da Metade dos Brasileiros Têm Hábitos Noturnos de Compra Online", 30/07/2025, <https://forbes.com.br/forbes-money/2025/07/mais-da-metade-dos-brasileiros-compra-online-durante-a-noite-ou-de-madrugada/> (acesso em 17/11/2026). Ela divulga a mesma pesquisa da Octadesk com Opinion Box, com 2 mil entrevistados, e diz que **56%** dos brasileiros **compram** online à noite ou de madrugada.
+- A pesquisa **não** informa a hora exata, só o período ("noite ou madrugada"). Ela reforça que a noite é um período de uso relevante para e-commerce, mas não basta sozinha para fixar 20h–22h.
 
 **Limitações da justificativa:**
 - O tráfego do IX.br é **troca entre redes** (provedores de acesso e de conteúdo), não o tráfego dos usuários finais nem o do Mercado Livre. Ele é usado como indicador do uso residencial de internet no Brasil, e não do uso do ML.
 - **Não encontramos** dado público do próprio Mercado Livre sobre o horário de maior acesso ao site. Também não encontramos um dado de compras online por hora cheia (20h, 21h, 22h). Buscas feitas em 17/11/2026: notícias e apresentações do IX.br/NIC.br (forum.ix.br, datacenterdynamics.com, convergenciadigital.com.br) e pesquisas de e-commerce (Octadesk, Visa, Nuvemshop, Tray). A notícia da DatacenterDynamics sobre o recorde de 10 Tbps de 2020 não pôde ser lida (HTTP 403).
-- Os gráficos do IX.br são **dinâmicos** (janela móvel de 24 h e de 7 dias). Os números acima são os da data de acesso.
-- O eixo do gráfico não informa o fuso. Ele foi interpretado como horário de Brasília porque a hora da "Última Atualização" (21:00) bate com o horário local (BRT) do acesso e com a borda direita do gráfico.
+- Os gráficos do IX.br são **dinâmicos** (janela móvel de 24 h e de 7 dias). Os números acima são os da data e hora do acesso (18/11/2026, por volta das 16h30 BRT).
+- O eixo do gráfico não informa o fuso. Ele foi interpretado como horário de Brasília porque a hora da "Última Atualização" (16:00) bate com o horário local (BRT) do acesso e com a borda direita do gráfico.
 
-> **Pendência para o integrante A:** salvar uma cópia dos dois gráficos do IX.br (ex.: `docs/img/ixbr-diario-2026-11-17.png` e `docs/img/ixbr-semanal-2026-11-17.png`), já que as imagens publicadas mudam a cada atualização. Esta tarefa só podia criar `docs/proposta.md`, por isso as imagens não foram versionadas.
+> **Pendência para o integrante A:** salvar uma cópia dos dois gráficos do IX.br (ex.: `docs/img/ixbr-diario-2026-11-18.png` e `docs/img/ixbr-semanal-2026-11-18.png`), já que as imagens publicadas mudam a cada atualização. As imagens ainda não foram versionadas.
 
 ## Hipóteses
 
