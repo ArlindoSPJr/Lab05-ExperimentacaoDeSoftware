@@ -12,39 +12,3 @@ O objeto de estudo é o site em operação. GitHub e GitHub Actions são só ins
 
 O acompanhamento das tarefas fica no GitHub Projects: **https://github.com/users/ArlindoSPJr/projects/7**
 
-## Documentos de referência
-
-- [Design do estudo](docs/superpowers/specs/2026-11-16-mercadolivre-desempenho-acessibilidade-design.md): fonte da verdade sobre o método, as hipóteses, a coleta e a análise.
-- [Issues por onda e sprint](docs/superpowers/plans/2026-11-16-issues-ondas.md): divisão do trabalho, espelhada nas issues do GitHub e no Kanban.
-- [Enunciado do Lab05](Lab05Medicao.pdf).
-
-## Papéis
-
-Os papéis são fixos e seguem o §7 do design. A definição de quem ocupa cada papel ainda está em aberto (§9 do design).
-
-| Papel | Responsabilidade | Integrante |
-|---|---|---|
-| A | Planejamento e Método | a definir |
-| B | Instrumentação e Operação | a definir |
-| C | Análise e Impacto | a definir |
-
-## Cronograma
-
-| Período | Etapa |
-|---|---|
-| 16/11 – 26/11 | Sprint conjunta S01 + S02: proposta, coleta e análise |
-| 26/11 | **Entrega conjunta S01 + S02** |
-| 27/11 – 03/12 | Sprint S03: impacto, conclusões e entrega final |
-| 03/12 | Ensaio da apresentação |
-| 04/12 | **Apresentação do grupo** (10 min) |
-
-O detalhamento por onda e as datas críticas da coleta estão no §7 do design.
-
-## Regra de commit
-
-- Toda mensagem de commit referencia a issue do GitHub pelo número, com `Refs #N`.
-- `Closes #N` só no PR que conclui a issue; commits usam `Refs #N`.
-
-## Como reproduzir
-
-Em construção. Esta seção será escrita na issue #30 (B-11).
