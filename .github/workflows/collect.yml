@@ -2,7 +2,7 @@ name: Coleta PSI
 
 on:
   schedule:
-    # Horários em UTC: 20h07, 22h07, 03h07 e 05h07 BRT
+    # Horários em UTC, que correspondem a 20h07, 22h07, 03h07 e 05h07 BRT (UTC-3)
     - cron: "7 23 * * *"
     - cron: "7 1 * * *"
     - cron: "7 6 * * *"
