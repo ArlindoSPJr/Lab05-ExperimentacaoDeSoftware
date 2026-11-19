@@ -1,19 +1,28 @@
 name: Coleta PSI
 
+# Horários da coleta (BRT): 20h07, 22h07, 03h07 e 05h07. Ver docs/agendador.md.
+#
+# Na 1ª noite (18→19/11), o schedule do GitHub atrasou o pico em 5 a 7 h e descartou
+# os disparos de 03h07 e 05h07 (docs/anomalias.md). Por isso agora há várias
+# tentativas por horário:
+#   - schedule a cada 10 min na primeira hora de cada horário (6 tentativas);
+#   - workflow_dispatch com agendado=true, vindo de agendadores externos opcionais.
+# O porteiro (scripts/porteiro.py) deixa medir só a primeira tentativa que chega
+# até 60 min depois do horário nominal. As demais saem sem chamar a PSI.
 on:
-  # O "schedule" do GitHub foi retirado em 19/11: na 1ª noite ele atrasou os
-  # disparos de pico em 5 a 7 h e não executou os de 03h07 e 05h07 (docs/anomalias.md).
-  # Os horários da coleta agora vêm de um agendador externo (cron-job.org), que
-  # chama a API do workflow_dispatch com agendado=true no horário exato (BRT):
-  # 20h07, 22h07, 03h07 e 05h07. Ver docs/agendador.md.
+  schedule:
+    - cron: "7-57/10 23 * * *"  # 20h07–20h57 BRT (pico-1)
+    - cron: "7-57/10 1 * * *"   # 22h07–22h57 BRT (pico-2)
+    - cron: "7-57/10 6 * * *"   # 03h07–03h57 BRT (madrugada-1)
+    - cron: "7-57/10 8 * * *"   # 05h07–05h57 BRT (madrugada-2)
   workflow_dispatch:
     inputs:
       agendado:
-        description: "true só para o agendador externo; disparo manual de teste deixa false"
+        description: "true só para agendadores externos; disparo manual de teste deixa false"
         type: boolean
         default: false
       cron:
-        description: "Horário nominal em cron UTC (ex.: 7 23 * * *), enviado pelo agendador"
+        description: "Ignorado: o porteiro deduz o horário pelo instante do disparo"
         type: string
         default: ""
 
@@ -22,7 +31,8 @@ permissions:
   # Para abrir a issue de alerta quando a coleta agendada falha.
   issues: write
 
-# Uma execução por vez: a seguinte espera a atual terminar.
+# Uma execução por vez. Tentativas que chegam durante uma coleta esperam e depois
+# o porteiro as descarta.
 concurrency:
   group: coleta-psi
   cancel-in-progress: false
@@ -32,45 +42,50 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 100
     steps:
+      # ref: main, e não o commit do disparo: a tentativa precisa ver os CSVs que
+      # uma coleta anterior acabou de enviar.
       - uses: actions/checkout@v4
+        with:
+          ref: main
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: pip
 
-      - name: Instalar dependências
-        run: pip install -r requirements.txt
-
-      - name: Definir destino dos dados
+      - name: Decidir se mede e para onde vão os dados
         env:
+          EVENTO: ${{ github.event_name }}
           AGENDADO: ${{ inputs.agendado }}
-          CRON_NOMINAL: ${{ inputs.cron }}
         run: |
-          if [ "$AGENDADO" = "true" ]; then
-            # Só os 4 horários do desenho entram na coleta principal.
-            case "$CRON_NOMINAL" in
-              "7 23 * * *"|"7 1 * * *"|"7 6 * * *"|"7 8 * * *") ;;
-              *) echo "cron inválido para coleta agendada: '$CRON_NOMINAL'" >&2; exit 1 ;;
-            esac
-            echo "GATILHO=agendador" >> "$GITHUB_ENV"
+          if [ "$EVENTO" = "schedule" ] || [ "$AGENDADO" = "true" ]; then
+            if [ "$EVENTO" = "schedule" ]; then GATILHO=schedule; else GATILHO=agendador; fi
+            echo "GATILHO=$GATILHO" >> "$GITHUB_ENV"
             echo "DESTINO=data/raw" >> "$GITHUB_ENV"
             echo "ESTADO=data/estado_reservas.json" >> "$GITHUB_ENV"
+            python scripts/porteiro.py --raw data/raw
           else
-            echo "GATILHO=workflow_dispatch" >> "$GITHUB_ENV"
             # Disparos manuais não entram na análise nem alteram as reservas da coleta.
-            echo "DESTINO=data/raw/testes" >> "$GITHUB_ENV"
-            echo "ESTADO=data/raw/testes/estado_reservas.json" >> "$GITHUB_ENV"
+            {
+              echo "GATILHO=workflow_dispatch"
+              echo "DESTINO=data/raw/testes"
+              echo "ESTADO=data/raw/testes/estado_reservas.json"
+              echo "COLETAR=true"
+              echo "CRON="
+            } >> "$GITHUB_ENV"
           fi
 
+      - name: Instalar dependências
+        if: env.COLETAR == 'true'
+        run: pip install -r requirements.txt
+
       - name: Coletar
+        if: env.COLETAR == 'true'
         env:
           PSI_API_KEY: ${{ secrets.PSI_API_KEY }}
-          CRON: ${{ inputs.cron }}
         run: python scripts/collect.py --urls config/urls.csv --out "$DESTINO" --json out/json --estado "$ESTADO"
 
       - name: Publicar JSONs brutos
-        if: always()
+        if: always() && env.COLETAR == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: json-${{ github.run_id }}-${{ github.run_attempt }}
@@ -79,7 +94,7 @@ jobs:
           if-no-files-found: warn
 
       - name: Versionar os CSVs
-        if: always()
+        if: always() && env.COLETAR == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -98,16 +113,15 @@ jobs:
           exit 1
 
       # Apoio ao #T-0: uma issue nova notifica quem acompanha o repositório (Watch).
-      # Não cobre execução que o GitHub nem chega a iniciar; isso é visto na checagem diária.
+      # Não cobre horário em que nenhuma tentativa chegou; isso é visto na checagem diária.
       - name: Avisar a equipe se a coleta falhar
-        if: failure() && inputs.agendado
+        if: failure() && (github.event_name == 'schedule' || inputs.agendado)
         env:
           GH_TOKEN: ${{ github.token }}
-          CRON: ${{ inputs.cron }}
         run: |
           gh issue create --repo "$GITHUB_REPOSITORY" \
             --title "Falha na coleta agendada (cron ${CRON}, $(date -u +%Y-%m-%dT%H:%MZ))" \
-            --body "A execução ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID} falhou.
+            --body "A execução ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID} falhou. A próxima tentativa do mesmo horário mede de novo se esta não gravou nenhuma linha válida.
 
           Quem estiver na vigilância do dia: abrir o log, avisar o responsável pela coleta (papel B) e registrar em docs/anomalias.md.
 

@@ -1,4 +1,4 @@
-# Agendador externo da coleta (issue #10)
+# Disparo da coleta (issue #10)
 
 ## Por que existe
 
@@ -9,36 +9,49 @@ Na primeira noite da coleta (18→19/11/2026), o `schedule` do GitHub Actions fa
 
 O GitHub avisa que o `schedule` pode atrasar ou ser descartado quando há carga alta. Como a janela de cada execução é calculada pelo **horário real de início** (é o horário da medição que importa para as hipóteses), um atraso desses tira a execução da janela. Sem execuções no pico não dá para testar H1, H2 e H5. O registro completo está em [`anomalias.md`](anomalias.md).
 
-A partir de 19/11, um agendador externo dispara a coleta no horário certo pela API `workflow_dispatch` do GitHub. O `schedule` saiu do workflow para não gerar execuções atrasadas, fora da janela e duplicadas.
+## Como funciona agora (desde 19/11): várias tentativas e um porteiro
 
-## Agendador em uso: Agendador de Tarefas do Windows (desde 19/11)
+Em vez de depender de **um** disparo por horário, o workflow recebe **várias tentativas** por horário e mede só uma:
 
-Ele roda no PC do integrante B (Arthur) e foi a solução que dava para ativar no mesmo dia, sem criar token nem conta nova:
+1. **`schedule` a cada 10 min na primeira hora de cada horário.** São 6 tentativas por horário: 20h07–20h57, 22h07–22h57, 03h07–03h57 e 05h07–05h57 BRT. Tudo roda nos servidores do GitHub, sem PC ligado e sem token. O repositório é público, então os minutos do Actions são gratuitos.
+2. **O porteiro** (`scripts/porteiro.py`, testado em `tests/test_porteiro.py`) roda no início de cada tentativa. Ele deixa medir só se as duas condições valem:
+   - o instante está entre 5 min antes e 60 min depois de um dos 4 horários nominais;
+   - esse horário ainda não tem, no CSV do dia, uma execução de coleta sem erro que começou dentro dessa mesma tolerância.
 
-- `scripts/agendar_windows.ps1` cria as 4 tarefas diárias (20h07, 22h07, 03h07 e 05h07, no horário local de Brasília). Com `-Remover`, ele as apaga.
-- Cada tarefa roda `scripts/disparar_coleta.ps1`, que chama `gh workflow run collect.yml -f agendado=true -f cron=...` com o login do `gh` do próprio integrante.
-- **Proteção contra atraso:** se o PC acordar ou ligar mais de 30 min depois do horário nominal, o disparo é ignorado e registrado no log. Uma medição atrasada cairia na janela errada. A tarefa também não é recuperada depois.
-- **Log:** `%LOCALAPPDATA%\lab05\disparos.log` registra cada disparo, cada disparo ignorado e cada falha.
-- **Requisitos:** o PC precisa estar ligado na tomada e com o usuário logado (pode estar com a tela bloqueada ou suspenso, mas não desligado nem com a sessão encerrada). Os despertadores do Windows precisam estar ativados. Foram conferidos em 19/11 com `powercfg`.
-- **Teste em 19/11:** `disparar_coleta.ps1 -Teste` gerou a execução 44534155362 (`workflow_dispatch`, gravada em `data/raw/testes/`).
+   Caso contrário, a tentativa sai em poucos segundos **sem chamar a PSI**. A cadência ética continua sendo de 1 coleta por horário.
+3. **Uma tentativa atrasada demais é descartada.** Assim, um atraso como o de 18→19/11 não grava mais uma medição na janela errada.
+4. **Se uma coleta falha inteira** (todas as linhas com erro), a próxima tentativa do mesmo horário mede de novo.
 
-O risco é o PC ficar desligado, perder energia ou sair da sessão durante a noite. A checagem diária do #T-0 pega isso. Se acontecer, a solução mais robusta é migrar para o cron-job.org, como está descrito abaixo.
+A coluna `cron` do CSV continua com o horário nominal do desenho (`7 23 * * *`, `7 1 * * *`, `7 6 * * *` e `7 8 * * *`), e não com a expressão de 10 em 10 min. Quem preenche esse valor é o porteiro.
 
-## Alternativa: cron-job.org
-
-O cron-job.org é um serviço gratuito de cron por HTTP. Ele não depende de nenhum PC ligado, mas exige um token do dono do repositório guardado num serviço de terceiros.
+**Limite:** se o GitHub atrasar **todas** as 6 tentativas de um horário em mais de 1 h, ou descartar todas, aquele horário fica sem medição. A checagem diária do #T-0 registra isso em `anomalias.md`. Para reduzir esse risco, dá para somar disparos externos (abaixo), e o porteiro evita medição duplicada.
 
 ## Como o workflow distingue os disparos
 
-| Disparo | `agendado` | `gatilho` no CSV | Destino | Entra na análise? |
+| Disparo | `gatilho` no CSV | Passa pelo porteiro? | Destino | Entra na análise? |
 |---|---|---|---|---|
-| cron-job.org | `true` | `agendador` | `data/raw/` | Sim |
-| Manual pela aba Actions ou `gh workflow run` | `false` (padrão) | `workflow_dispatch` | `data/raw/testes/` | Não |
-| `schedule` antigo (só em 19/11) | — | `schedule` | `data/raw/` | Sim, com a janela pelo horário real |
+| `schedule` (a cada 10 min) | `schedule` | Sim | `data/raw/` | Sim |
+| Agendador externo opcional (`agendado=true`) | `agendador` | Sim | `data/raw/` | Sim |
+| Manual pela aba Actions ou `gh workflow run` (`agendado=false`) | `workflow_dispatch` | Não | `data/raw/testes/` | Não |
 
-Com `agendado=true`, o workflow só aceita um dos 4 crons do desenho (`7 23 * * *`, `7 1 * * *`, `7 6 * * *` e `7 8 * * *`). Qualquer outro valor faz a execução falhar sem medir, e isso abre a issue de alerta.
+## Disparos externos opcionais (redundância)
 
-## Configuração (uma vez)
+Nenhum deles é obrigatório. Eles só somam tentativas ao `schedule`.
+
+### Agendador de Tarefas do Windows
+
+- `scripts/agendar_windows.ps1` cria 4 tarefas diárias às 20h07, 22h07, 03h07 e 05h07. Com `-Remover`, ele as apaga.
+- Cada tarefa roda `scripts/disparar_coleta.ps1`, que chama `gh workflow run collect.yml -f agendado=true` com o login do `gh` do integrante.
+- Se o PC acordar mais de 30 min atrasado, o disparo é ignorado.
+- O log fica em `%LOCALAPPDATA%\lab05\disparos.log`.
+- **O PC não precisa ficar ligado:** se ele estiver desligado, o `schedule` cobre o horário.
+- Está instalado no PC do Arthur desde 19/11. O teste com `-Teste` gerou a execução 44534155362, gravada em `data/raw/testes/`.
+
+### cron-job.org
+
+O cron-job.org é um serviço gratuito de cron por HTTP, que dispara no minuto exato. Ele exige um token do dono do repositório guardado num serviço de terceiros. A configuração está a seguir.
+
+## Configuração do cron-job.org (opcional)
 
 ### 1. Token com permissão mínima (quem cria: o dono do repositório, ArlindoSPJr)
 
@@ -72,9 +85,9 @@ Crie a conta em https://cron-job.org. Depois crie 4 tarefas iguais, que só muda
 | `lab05-madrugada-1` | 03:07 | `{"ref":"main","inputs":{"agendado":"true","cron":"7 6 * * *"}}` |
 | `lab05-madrugada-2` | 05:07 | `{"ref":"main","inputs":{"agendado":"true","cron":"7 8 * * *"}}` |
 
-O campo `cron` continua no formato UTC antigo para que a coluna `cron` do CSV fique comparável com as execuções de 19/11.
+O campo `cron` do corpo é ignorado, porque o porteiro deduz o horário pelo instante do disparo. Ele continua no corpo só para facilitar a leitura.
 
-**Não use o botão "Test run" dessas tarefas:** ele dispararia uma coleta válida fora do horário. Para testar, use o comando da seção abaixo.
+O botão "Test run" dessas tarefas é inofensivo fora do horário, porque o porteiro descarta o disparo. Dentro da tolerância de um horário ainda não medido, porém, ele faria uma coleta válida.
 
 ### 3. Teste do caminho completo
 
@@ -95,11 +108,13 @@ A resposta esperada é `HTTP 204`, e uma execução `workflow_dispatch` aparece 
 
 Conforme a decisão do #A-8, antes de 25/11 às 20h07 é preciso **desativar os disparos**, ou trocá-los para a coleta exploratória (#B-12):
 
+- no GitHub, rodar `gh workflow disable collect.yml` (ou tirar o bloco `schedule` do workflow);
 - no Windows, rodar `powershell -File scripts\agendar_windows.ps1 -Remover`;
 - no cron-job.org, se tiver sido usado, desativar as 4 tarefas e **revogar o token**.
 
 ## Limites que continuam valendo
 
 - A cadência não mudou: 4 execuções por noite, 38 chamadas cada, com ≥ 2 s entre chamadas (`docs/etica.md`).
-- O cron-job.org também pode falhar. Por isso a checagem diária do #T-0 confere se as 4 execuções da noite aparecem no Actions.
-- A fila do GitHub ainda pode atrasar o início em alguns minutos depois do disparo. Isso não muda a janela, porque o disparo mais apertado (22h07) ainda tem 1h52 até o fim da janela de pico.
+- Todo disparo pode falhar, tanto o `schedule` quanto os externos. Por isso a checagem diária do #T-0 confere se cada um dos 4 horários da noite tem uma execução com 38 linhas.
+- O porteiro aceita até 60 min de atraso, e mesmo assim a medição continua na janela certa: o horário mais apertado (22h07) termina a tolerância às 23h07, ainda dentro do pico.
+- O início real da medição varia em até 1 h entre as noites. Isso é uma ameaça interna pequena e fica registrado pela coluna `ts_inicio_utc`.

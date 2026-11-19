@@ -31,7 +31,7 @@
   - Correção de **Holm** sobre os 5 p primários, com α = 0,05. Testes **bilaterais**.
 - Os dias 26–28/11 (Black Friday, 27/11) **nunca** entram no conjunto principal.
 - Só execuções com `gatilho` em `{'schedule', 'agendador'}` entram na análise. Os disparos manuais gravam em `data/raw/testes/`.
-  - **Revisão de 19/11:** o `schedule` do GitHub atrasou e descartou disparos na 1ª noite. Desde então, os 4 horários vêm de um agendador externo (`gatilho=agendador`). Ver `docs/anomalias.md` e `docs/agendador.md`.
+  - **Revisão de 19/11:** o `schedule` do GitHub atrasou e descartou disparos na 1ª noite. Desde então, o `schedule` do GitHub passou a disparar a cada 10 min na primeira hora de cada horário, e o porteiro (`scripts/porteiro.py`) deixa medir só a primeira tentativa até 60 min depois do horário nominal, sem duplicar. Disparos externos opcionais (`agendado=true`, gravados como `gatilho=agendador`) passam pelo mesmo porteiro. Ver `docs/anomalias.md` e `docs/agendador.md`.
 - A chave da API fica só no secret `PSI_API_KEY`.
 - As notas da PSI vêm na escala 0–1 (o §5.4 fala em 0–100). A escala fica declarada no dicionário de dados.
 - Entrega conjunta S01 + S02 em **26/11**. Apresentação em **04/12** e ensaio em **03/12**.
@@ -257,7 +257,7 @@ Esta é a onda mais carregada. **Só o #B-5 pode ir para 19/11** sem afetar o wo
 
 **Aceite:** a execução manual dá verde, e a primeira execução agendada (18/11 23h07 UTC) aparece na aba Actions com `gatilho=schedule` no CSV.
 
-**Revisão de 19/11:** o `schedule` foi trocado pelo agendador externo (`docs/agendador.md`). Novo aceite: as 4 execuções da noite de 19→20/11 começam no horário (±15 min) com `gatilho=agendador`.
+**Revisão de 19/11:** o disparo passou a ter várias tentativas por horário e um porteiro (`docs/agendador.md`). Novo aceite: cada um dos 4 horários da noite de 19→20/11 tem exatamente 1 execução de 38 linhas, começando até 60 min depois do horário nominal.
 
 #### #B-5 Dicionário de dados e checagem de localização (pode ir para 19/11)
 - [ ] Criar `docs/dados.md` com cada coluna do CSV: nome, unidade, origem no JSON e escala (§5.4). Declarar que as notas vêm na escala 0–1.
