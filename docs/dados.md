@@ -12,7 +12,7 @@ Cada linha de `data/raw/AAAA-MM-DD_BRT.csv` é uma chamada à API do PageSpeed I
 | Coluna | Unidade / formato | Origem | Escala |
 |---|---|---|---|
 | `run_id` | `AAAAMMDDTHHMMSSZ` | Horário de início da execução (UTC) | Nominal |
-| `gatilho` | `schedule`, `workflow_dispatch` ou `local` | Variável `GATILHO` | Nominal |
+| `gatilho` | `agendador`, `schedule`, `workflow_dispatch` ou `local` | Variável `GATILHO`. `agendador` é o disparo do cron-job.org, válido a partir de 19/11. `schedule` é o cron do GitHub, usado só em 19/11 (ver `agendador.md`). Entram na análise `agendador` e `schedule` | Nominal |
 | `cron` | Expressão cron | Variável `CRON` (vazia em disparos manuais) | Nominal |
 | `ts_inicio_utc` | ISO 8601, UTC | Relógio do coletor, uma vez por execução | Intervalar |
 | `ts_utc` | ISO 8601, UTC | Relógio do coletor, antes de cada chamada | Intervalar |
