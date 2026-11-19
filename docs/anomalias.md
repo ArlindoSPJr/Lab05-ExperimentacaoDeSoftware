@@ -21,6 +21,6 @@ As duas execuções que rodaram estão completas: 38 linhas cada, sem bloqueio e
 
 **Tratamento dos dados:** as duas execuções ficam no dataset com a janela pelo horário real (`madrugada`), porque é quando a medição de fato aconteceu. A coluna `cron` guarda o horário nominal, e por ela dá para identificá-las. Na análise, elas contam como as 2 execuções de madrugada de 19/11, e a noite de 18/11 fica sem execução de pico. A coleta principal passa a ter, no máximo, 12 execuções de pico e 14 de madrugada (26 em vez de 28).
 
-**Correção (19/11/2026, #10):** o `schedule` saiu do workflow. Os disparos passaram a vir de um agendador externo (cron-job.org) pela API `workflow_dispatch`, com `gatilho=agendador`. Detalhes em [`agendador.md`](agendador.md). A primeira noite com o agendador é a de 19→20/11.
+**Correção (19/11/2026, #10):** o `schedule` do GitHub passou a disparar a cada 10 min na primeira hora de cada horário, e o porteiro (`scripts/porteiro.py`) deixa medir só a primeira tentativa até 60 min depois do horário nominal, sem duplicar. Disparos externos opcionais (`agendado=true`, gravados como `gatilho=agendador`) passam pelo mesmo porteiro. Detalhes em [`agendador.md`](agendador.md). A primeira noite com o esquema novo é a de 19→20/11.
 
 **Ameaça à validade:** é uma ameaça de **conclusão e interna**, por causa da perda de uma noite de pico e do desbalanceamento. Ela entra na revisão do #A-7.
