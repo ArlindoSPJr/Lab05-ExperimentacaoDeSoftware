@@ -71,7 +71,7 @@ O Lighthouse 13.6.0 não devolve o título da página na PSI, então `titulo` te
 | `final_url` | URL | `LHR.mainDocumentUrl`, `finalDisplayedUrl` ou `finalUrl` | Nominal |
 | `status_http` | Código HTTP | `statusCode` do item de `network-requests` com a URL final, ou do 1º `Document` | Nominal |
 | `titulo` | Texto | `LHR.title`, vazio se a PSI não devolver | Nominal |
-| `throttling` | JSON | `LHR.configSettings.throttling` | Nominal |
+| `throttling` | JSON | `LHR.configSettings.throttling`. A PSI não devolve esse campo (só `emulatedFormFactor`, `formFactor`, `locale`, `onlyCategories` e `channel`), então a coluna sai `null` em todas as linhas. A limitação vem fixa da PSI: no perfil móvel, 4G lento simulado (150 ms de RTT, 1.638,4 kb/s) e CPU 1,2x, conforme o relatório do PSI web de 19/11 | Nominal |
 
 ## Dados de campo (CrUX)
 
@@ -88,11 +88,22 @@ Os campos `crux_lcp_*`, `crux_inp_*` e `crux_cls_*` só são preenchidos quando 
 
 ## Checagem de localização (ameaça externa, design §5.10)
 
-**Pendente.** Depende de 3 execuções manuais feitas por um integrante em pagespeed.web.dev, a partir do Brasil, e da primeira execução do Actions.
+Feita em 19/11/2026. Pergunta: medir pela API a partir do runner do GitHub Actions (servidor nos EUA) dá números diferentes de medir pelo PSI web a partir do Brasil?
 
-| Execução | Origem | Data e hora (BRT) | TTFB (ms) | LCP (ms) |
-|---|---|---|---|---|
-| Manual 1 | PSI web, Brasil | | | |
-| Manual 2 | PSI web, Brasil | | | |
-| Manual 3 | PSI web, Brasil | | | |
-| Actions | `run_id` a preencher | | | |
+Todas as execuções usam a home (`https://www.mercadolivre.com.br/`), o perfil móvel e o Lighthouse 13.6.0. As 3 manuais foram feitas em pagespeed.web.dev, num navegador no Brasil, com cerca de 1 min entre elas. O TTFB manual é o "observado" da auditoria *Latência da solicitação de documentos* (`document-latency-insight`). O LCP manual é o do relatório de laboratório, que a interface arredonda para 0,1 s.
+
+| Execução | Origem | Data e hora (BRT) | TTFB (ms) | LCP (ms) | Local do navegador (relatório) |
+|---|---|---|---|---|---|
+| Manual 1 | PSI web, disparada do Brasil | 19/11 09h57 | 68 | 3.800 | América do Norte |
+| Manual 2 | PSI web, disparada do Brasil | 19/11 09h58 | 17 | 3.800 | América do Norte |
+| Manual 3 | PSI web, disparada do Brasil | 19/11 10h00 | 25 | 3.500 | América do Norte |
+| Actions | API, `run_id` `20261119T040444Z` | 19/11 01h19 | 33 | 7.403 | não consta no CSV |
+| Actions | API, `run_id` `20261119T083531Z` | 19/11 05h37 | 17 | 5.805 | não consta no CSV |
+
+**Resultado:**
+
+1. **A localização de quem dispara não muda onde o Lighthouse roda.** Mesmo disparadas do Brasil, as 3 execuções manuais informam "Local do navegador: América do Norte". A PSI escolhe o servidor de teste, e um navegador brasileiro não faz a medição sair do Brasil. Rodar a coleta a partir de um runner nos EUA não introduz, portanto, uma diferença de localização em relação ao uso "normal" da PSI.
+2. **O TTFB é da mesma ordem nas duas origens** (17–68 ms manual e 17–33 ms no Actions), o que é compatível com o mesmo ponto de teste.
+3. **O LCP de laboratório foi maior no Actions** (5,8–7,4 s contra 3,5–3,8 s). Esta checagem não separa a origem do horário: as execuções do Actions foram de madrugada e as manuais de manhã, e o LCP simulado varia entre execuções. Não dá para atribuir a diferença à localização.
+
+**Consequência para a validade:** os números medem a experiência de um celular emulado com rede 4G lenta simulada, num servidor da América do Norte, e **não** a de um usuário real no Brasil. A ameaça externa (§5.10) é mitigada só em parte. A comparação entre janelas continua válida porque todas as medições usam o mesmo ponto de teste, mas os valores absolutos não podem ser lidos como "o que o brasileiro vê". Para isso servem os campos `crux_*`, que são dados de campo de usuários reais do Chrome.
