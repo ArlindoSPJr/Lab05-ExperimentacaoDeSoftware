@@ -1,13 +1,21 @@
 name: Coleta PSI
 
 on:
-  schedule:
-    # Horários em UTC, que correspondem a 20h07, 22h07, 03h07 e 05h07 BRT (UTC-3)
-    - cron: "7 23 * * *"
-    - cron: "7 1 * * *"
-    - cron: "7 6 * * *"
-    - cron: "7 8 * * *"
+  # O "schedule" do GitHub foi retirado em 19/11: na 1ª noite ele atrasou os
+  # disparos de pico em 5 a 7 h e não executou os de 03h07 e 05h07 (docs/anomalias.md).
+  # Os horários da coleta agora vêm de um agendador externo (cron-job.org), que
+  # chama a API do workflow_dispatch com agendado=true no horário exato (BRT):
+  # 20h07, 22h07, 03h07 e 05h07. Ver docs/agendador.md.
   workflow_dispatch:
+    inputs:
+      agendado:
+        description: "true só para o agendador externo; disparo manual de teste deixa false"
+        type: boolean
+        default: false
+      cron:
+        description: "Horário nominal em cron UTC (ex.: 7 23 * * *), enviado pelo agendador"
+        type: string
+        default: ""
 
 permissions:
   contents: write
@@ -35,11 +43,21 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Definir destino dos dados
+        env:
+          AGENDADO: ${{ inputs.agendado }}
+          CRON_NOMINAL: ${{ inputs.cron }}
         run: |
-          if [ "${{ github.event_name }}" = "schedule" ]; then
+          if [ "$AGENDADO" = "true" ]; then
+            # Só os 4 horários do desenho entram na coleta principal.
+            case "$CRON_NOMINAL" in
+              "7 23 * * *"|"7 1 * * *"|"7 6 * * *"|"7 8 * * *") ;;
+              *) echo "cron inválido para coleta agendada: '$CRON_NOMINAL'" >&2; exit 1 ;;
+            esac
+            echo "GATILHO=agendador" >> "$GITHUB_ENV"
             echo "DESTINO=data/raw" >> "$GITHUB_ENV"
             echo "ESTADO=data/estado_reservas.json" >> "$GITHUB_ENV"
           else
+            echo "GATILHO=workflow_dispatch" >> "$GITHUB_ENV"
             # Disparos manuais não entram na análise nem alteram as reservas da coleta.
             echo "DESTINO=data/raw/testes" >> "$GITHUB_ENV"
             echo "ESTADO=data/raw/testes/estado_reservas.json" >> "$GITHUB_ENV"
@@ -48,8 +66,7 @@ jobs:
       - name: Coletar
         env:
           PSI_API_KEY: ${{ secrets.PSI_API_KEY }}
-          GATILHO: ${{ github.event_name }}
-          CRON: ${{ github.event.schedule }}
+          CRON: ${{ inputs.cron }}
         run: python scripts/collect.py --urls config/urls.csv --out "$DESTINO" --json out/json --estado "$ESTADO"
 
       - name: Publicar JSONs brutos
@@ -72,7 +89,7 @@ jobs:
             echo "Nada novo para versionar."
             exit 0
           fi
-          git commit -m "Registra coleta ${{ github.event_name }} ${{ github.run_id }}" -m "Refs #10"
+          git commit -m "Registra coleta $GATILHO ${{ github.run_id }}" -m "Refs #10"
           for tentativa in 1 2 3 4 5; do
             git pull --rebase origin main && git push origin HEAD:main && exit 0
             sleep $((tentativa * 10))
@@ -83,10 +100,10 @@ jobs:
       # Apoio ao #T-0: uma issue nova notifica quem acompanha o repositório (Watch).
       # Não cobre execução que o GitHub nem chega a iniciar; isso é visto na checagem diária.
       - name: Avisar a equipe se a coleta falhar
-        if: failure() && github.event_name == 'schedule'
+        if: failure() && inputs.agendado
         env:
           GH_TOKEN: ${{ github.token }}
-          CRON: ${{ github.event.schedule }}
+          CRON: ${{ inputs.cron }}
         run: |
           gh issue create --repo "$GITHUB_REPOSITORY" \
             --title "Falha na coleta agendada (cron ${CRON}, $(date -u +%Y-%m-%dT%H:%MZ))" \

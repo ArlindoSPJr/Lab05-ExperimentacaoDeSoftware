@@ -30,7 +30,8 @@
   - H2 e H4 usam o perfil **móvel**, e a home fica fora dos testes.
   - Correção de **Holm** sobre os 5 p primários, com α = 0,05. Testes **bilaterais**.
 - Os dias 26–28/11 (Black Friday, 27/11) **nunca** entram no conjunto principal.
-- Só execuções com `gatilho == 'schedule'` entram na análise. Os disparos manuais gravam em `data/raw/testes/`.
+- Só execuções com `gatilho` em `{'schedule', 'agendador'}` entram na análise. Os disparos manuais gravam em `data/raw/testes/`.
+  - **Revisão de 19/11:** o `schedule` do GitHub atrasou e descartou disparos na 1ª noite. Desde então, os 4 horários vêm de um agendador externo (`gatilho=agendador`). Ver `docs/anomalias.md` e `docs/agendador.md`.
 - A chave da API fica só no secret `PSI_API_KEY`.
 - As notas da PSI vêm na escala 0–1 (o §5.4 fala em 0–100). A escala fica declarada no dicionário de dados.
 - Entrega conjunta S01 + S02 em **26/11**. Apresentação em **04/12** e ensaio em **03/12**.
@@ -256,6 +257,8 @@ Esta é a onda mais carregada. **Só o #B-5 pode ir para 19/11** sem afetar o wo
 
 **Aceite:** a execução manual dá verde, e a primeira execução agendada (18/11 23h07 UTC) aparece na aba Actions com `gatilho=schedule` no CSV.
 
+**Revisão de 19/11:** o `schedule` foi trocado pelo agendador externo (`docs/agendador.md`). Novo aceite: as 4 execuções da noite de 19→20/11 começam no horário (±15 min) com `gatilho=agendador`.
+
 #### #B-5 Dicionário de dados e checagem de localização (pode ir para 19/11)
 - [ ] Criar `docs/dados.md` com cada coluna do CSV: nome, unidade, origem no JSON e escala (§5.4). Declarar que as notas vêm na escala 0–1.
 - [ ] Fazer 3 execuções manuais no PSI web, a partir do Brasil, com a home mobile. Registrar o TTFB e o LCP e comparar com uma execução do Actions (ameaça externa de localização, §5.10).
@@ -268,7 +271,7 @@ Esta é a onda mais carregada. **Só o #B-5 pode ir para 19/11** sem afetar o wo
 
 #### #C-1 Descritiva do piloto incorporado
 **Arquivos:** `analysis/piloto.py` e `analysis/out/piloto/`
-- [ ] Carregar só as linhas com `gatilho == 'schedule'` de 18/11 20h07 a 19/11 05h07. Não ler `data/raw/testes/`.
+- [ ] Carregar só as linhas com `gatilho` em `{'schedule', 'agendador'}` de 18/11 20h07 a 19/11 05h07 (na prática, as 2 execuções de madrugada de 19/11; ver `docs/anomalias.md`). Não ler `data/raw/testes/`.
 - [ ] Calcular a cobertura (esperado 4 × 38 = 152 linhas), os bloqueios, os erros e o uso de reservas.
 - [ ] Calcular mediana e IQR de LCP, TTFB e reprovadas por tipo × perfil × janela, e a variância entre execuções da mesma URL.
 - [ ] Se houver um problema que exija descarte, comunicar a B e registrar em `docs/anomalias.md`.
@@ -279,7 +282,7 @@ Esta é a onda mais carregada. **Só o #B-5 pode ir para 19/11** sem afetar o wo
 **Arquivos:** criar `analysis/stats.py` e `tests/test_stats.py`.
 
 **Interfaces produzidas:**
-- `filtro_minimo(df) -> DataFrame`: mantém `gatilho=='schedule' & ~bloqueada & erro.isna() & janela!='fora'`. Reusada pelo `validate.py` (#B-7).
+- `filtro_minimo(df) -> DataFrame`: mantém `gatilho.isin(['schedule','agendador']) & ~bloqueada & erro.isna() & janela!='fora'`. Reusada pelo `validate.py` (#B-7).
 - `por_url(df, metrica: str, agg: str = "median") -> DataFrame`: uma linha por `slot_id × strategy`. `agg='mode'` usa o menor valor modal em caso de empate.
 - `kruskal_por_tipo(df_url, metrica: str) -> dict`, com as chaves `H, p, eps2, dunn` (DataFrame com p de Holm).
 - `modelo_misto(df, metrica: str) -> dict`, com as chaves `razao_perfil, razao_pico, ic95_perfil, ic95_pico, p_perfil, p_pico`.
@@ -362,7 +365,7 @@ Esta é a onda mais carregada. **Só o #B-5 pode ir para 19/11** sem afetar o wo
 ### Onda 1 — A (22–23/11)
 
 #### #A-6 Revisão do plano à luz do piloto
-- [ ] Definir as regras de **descarte**: linha `bloqueada`, linha com `erro`, janela `fora` e `gatilho != 'schedule'`.
+- [ ] Definir as regras de **descarte**: linha `bloqueada`, linha com `erro`, janela `fora` e `gatilho` fora de `{'schedule', 'agendador'}`.
 - [ ] Definir as regras de **sinalização sem descarte**: mudança de `lighthouse_version` e uso de reserva.
 - [ ] Registrar as janelas BRT (18h–23h59 = pico, 00h–07h59 = madrugada) como decisão de método.
 - [ ] Mudar só o que não quebra o desenho.
@@ -413,7 +416,7 @@ Esta é a onda mais carregada. **Só o #B-5 pode ir para 19/11** sem afetar o wo
 - [ ] `test_validate_execucao_ausente`: o conjunto esperado tem 28 pares (`data_brt`, `cron`). Sem um deles, gera a anomalia `execucao_ausente`.
 - [ ] `test_validate_exclui_bloqueadas_e_fora`: linhas `bloqueada` ou com janela `fora` não entram e são contadas como anomalias.
 - [ ] `test_validate_exclui_erro`: linha com `erro` não vazio não entra.
-- [ ] `test_validate_exclui_manual`: linhas com `gatilho != 'schedule'` não entram.
+- [ ] `test_validate_exclui_manual`: linhas com `gatilho` fora de `{'schedule', 'agendador'}` não entram.
 - [ ] `test_validate_inclui_ultima_execucao`:
   - uma execução iniciada em `2026-11-25T08:31Z`, com linhas até `08:58Z`, entra inteira;
   - uma iniciada em `2026-11-25T23:07Z` não entra.
