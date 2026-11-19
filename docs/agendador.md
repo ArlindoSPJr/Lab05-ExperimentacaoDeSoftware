@@ -9,7 +9,24 @@ Na primeira noite da coleta (18→19/11/2026), o `schedule` do GitHub Actions fa
 
 O GitHub avisa que o `schedule` pode atrasar ou ser descartado quando há carga alta. Como a janela de cada execução é calculada pelo **horário real de início** (é o horário da medição que importa para as hipóteses), um atraso desses tira a execução da janela. Sem execuções no pico não dá para testar H1, H2 e H5. O registro completo está em [`anomalias.md`](anomalias.md).
 
-A partir de 19/11, quem dispara a coleta no horário certo é o **cron-job.org**, um serviço gratuito de cron por HTTP. Ele chama a API `workflow_dispatch` do GitHub. O `schedule` saiu do workflow para não gerar execuções atrasadas, fora da janela e duplicadas.
+A partir de 19/11, um agendador externo dispara a coleta no horário certo pela API `workflow_dispatch` do GitHub. O `schedule` saiu do workflow para não gerar execuções atrasadas, fora da janela e duplicadas.
+
+## Agendador em uso: Agendador de Tarefas do Windows (desde 19/11)
+
+Ele roda no PC do integrante B (Arthur) e foi a solução que dava para ativar no mesmo dia, sem criar token nem conta nova:
+
+- `scripts/agendar_windows.ps1` cria as 4 tarefas diárias (20h07, 22h07, 03h07 e 05h07, no horário local de Brasília). Com `-Remover`, ele as apaga.
+- Cada tarefa roda `scripts/disparar_coleta.ps1`, que chama `gh workflow run collect.yml -f agendado=true -f cron=...` com o login do `gh` do próprio integrante.
+- **Proteção contra atraso:** se o PC acordar ou ligar mais de 30 min depois do horário nominal, o disparo é ignorado e registrado no log. Uma medição atrasada cairia na janela errada. A tarefa também não é recuperada depois.
+- **Log:** `%LOCALAPPDATA%\lab05\disparos.log` registra cada disparo, cada disparo ignorado e cada falha.
+- **Requisitos:** o PC precisa estar ligado na tomada e com o usuário logado (pode estar com a tela bloqueada ou suspenso, mas não desligado nem com a sessão encerrada). Os despertadores do Windows precisam estar ativados. Foram conferidos em 19/11 com `powercfg`.
+- **Teste em 19/11:** `disparar_coleta.ps1 -Teste` gerou a execução 44534155362 (`workflow_dispatch`, gravada em `data/raw/testes/`).
+
+O risco é o PC ficar desligado, perder energia ou sair da sessão durante a noite. A checagem diária do #T-0 pega isso. Se acontecer, a solução mais robusta é migrar para o cron-job.org, como está descrito abaixo.
+
+## Alternativa: cron-job.org
+
+O cron-job.org é um serviço gratuito de cron por HTTP. Ele não depende de nenhum PC ligado, mas exige um token do dono do repositório guardado num serviço de terceiros.
 
 ## Como o workflow distingue os disparos
 
@@ -76,7 +93,10 @@ A resposta esperada é `HTTP 204`, e uma execução `workflow_dispatch` aparece 
 
 ## Fim da coleta
 
-Conforme a decisão do #A-8, antes de 25/11 às 20h07 é preciso **desativar as 4 tarefas** no cron-job.org, ou trocá-las para a coleta exploratória (#B-12). Depois disso, **revogue o token**.
+Conforme a decisão do #A-8, antes de 25/11 às 20h07 é preciso **desativar os disparos**, ou trocá-los para a coleta exploratória (#B-12):
+
+- no Windows, rodar `powershell -File scripts\agendar_windows.ps1 -Remover`;
+- no cron-job.org, se tiver sido usado, desativar as 4 tarefas e **revogar o token**.
 
 ## Limites que continuam valendo
 
