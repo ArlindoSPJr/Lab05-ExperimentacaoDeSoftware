@@ -11,6 +11,8 @@ on:
 
 permissions:
   contents: write
+  # Para abrir a issue de alerta quando a coleta agendada falha.
+  issues: write
 
 # Uma execução por vez: a seguinte espera a atual terminar.
 concurrency:
@@ -77,3 +79,19 @@ jobs:
           done
           echo "Não foi possível enviar os dados." >&2
           exit 1
+
+      # Apoio ao #T-0: uma issue nova notifica quem acompanha o repositório (Watch).
+      # Não cobre execução que o GitHub nem chega a iniciar; isso é visto na checagem diária.
+      - name: Avisar a equipe se a coleta falhar
+        if: failure() && github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CRON: ${{ github.event.schedule }}
+        run: |
+          gh issue create --repo "$GITHUB_REPOSITORY" \
+            --title "Falha na coleta agendada (cron ${CRON}, $(date -u +%Y-%m-%dT%H:%MZ))" \
+            --body "A execução ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID} falhou.
+
+          Quem estiver na vigilância do dia: abrir o log, avisar o responsável pela coleta (papel B) e registrar em docs/anomalias.md.
+
+          Refs #10"
