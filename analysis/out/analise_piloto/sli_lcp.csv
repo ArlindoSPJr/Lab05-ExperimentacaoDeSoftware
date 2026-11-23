@@ -1,0 +1,9 @@
+tipo,strategy,janela,n,cumpre,sli
+busca,desktop,madrugada,12,12,1.0
+busca,mobile,madrugada,12,0,0.0
+categoria,desktop,madrugada,12,12,1.0
+categoria,mobile,madrugada,12,0,0.0
+home,desktop,madrugada,2,2,1.0
+home,mobile,madrugada,2,0,0.0
+produto,desktop,madrugada,12,12,1.0
+produto,mobile,madrugada,12,0,0.0

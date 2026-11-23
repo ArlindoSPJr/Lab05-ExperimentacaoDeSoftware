@@ -1,0 +1,3 @@
+efeito,metrica,grupo_a,grupo_b,n_a,n_b,cliffs_delta
+perfil,lcp_ms,mobile,desktop,18,18,1.0
+horario,ttfb_ms,pico,madrugada,0,0,

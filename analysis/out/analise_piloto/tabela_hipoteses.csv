@@ -1,0 +1,6 @@
+hipotese,teste,n,estatistica_nome,estatistica,p,efeito_nome,efeito,ic_inf,ic_sup,outros,p_holm
+H1,"Modelo misto, log(LCP)",72,,,5.8074532002760565e-158,razão móvel/desktop,4.5160729470890155,4.04424303034331,5.042949869829649,,2.3229812801104226e-157
+H2,"Kruskal-Wallis, mediana do LCP por URL (móvel)",18,H,2.1169590643274745,0.3469829859215547,ε²,0.12452700378396908,,,,0.3469829859215547
+H3,"Modelo misto, log(TTFB)",72,,,,razão pico/madrugada,,,,,
+H4,"Kruskal-Wallis, moda das reprovadas por URL (móvel)",18,H,12.609609609609612,0.0018275028537084177,ε²,0.7417417417417419,,,,0.0036550057074168354
+H5,"Wilcoxon pareado, LCP sintético × p75 CrUX (móvel)",18,,,1.52587890625e-05,kappa (categoria),-0.046511627906976744,,,"Spearman ρ = -0,368; Bland-Altman: média 2.683 ms, limites -2.356 a 7.723 ms",4.57763671875e-05
