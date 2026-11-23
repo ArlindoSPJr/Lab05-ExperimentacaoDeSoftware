@@ -1,5 +1,5 @@
 # JSONs brutos da PSI: nunca entram no git (design §5.9)
-out/
+/out/
 *.zip
 
 # Python
