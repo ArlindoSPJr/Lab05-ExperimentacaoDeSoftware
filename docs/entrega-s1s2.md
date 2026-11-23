@@ -17,7 +17,8 @@ O estudo mede o site do Mercado Livre de fora, pela API do PageSpeed Insights (P
 - **Janelas:** a execução entra na janela pelo horário real de início: pico de 18h a 23h59 e madrugada de 00h a 07h59 (BRT). Execuções fora dessas faixas são descartadas. A escolha do pico se apoia no tráfego agregado do IX.br ([`proposta.md`](proposta.md)).
 - **Execução:** cada execução faz 19 URLs × 2 perfis = 38 chamadas sequenciais, em **ordem sorteada**, com pelo menos 2 s entre elas (limite ético de 1 requisição por segundo).
 - **Volume previsto:** 4 execuções por dia durante 7 dias (18/11 20h07 → 25/11 05h07), ou seja, 28 execuções e **1.064 medições**. Cada combinação tipo × perfil × horário tem 84 medições, mas só **6 unidades independentes** (as URLs) para o fator tipo.
-- **Ajuste depois da primeira noite:** o `schedule` do GitHub atrasou as duas execuções de pico de 18/11 e não disparou as duas de madrugada (anomalia 1, [`anomalias.md`](anomalias.md)). A noite de 18/11 ficou sem pico, e o máximo possível passou a 26 execuções (12 de pico e 14 de madrugada), ou 988 medições. Desde 19/11, cada horário tem várias tentativas, e um porteiro deixa medir só a primeira dentro de 60 min do horário nominal ([`agendador.md`](agendador.md)). Até a manhã de 23/11, foram 15 execuções, todas com 38 linhas.
+- **Perdas nas duas primeiras noites:** na noite de 18→19/11, o `schedule` do GitHub atrasou as duas execuções de pico, que caíram na madrugada, e não disparou as duas de madrugada (anomalia 1, [`anomalias.md`](anomalias.md)). Desde 19/11, cada horário tem várias tentativas, e um porteiro deixa medir só a primeira dentro de 60 min do horário nominal ([`agendador.md`](agendador.md)). Mesmo assim, na noite de 19→20/11 o `schedule` disparou só duas vezes, e só a execução das 05h07 foi medida (anomalia 2). A partir de 20/11, os disparos vêm do agendador externo, e a coleta ficou completa.
+- **Volume possível:** com as duas perdas, a coleta principal tem no máximo **23 execuções** (10 de pico e 13 de madrugada), ou 874 medições, e as noites de 18/11 e 19/11 ficam sem pico. Até a manhã de 23/11, foram 15 execuções, todas com 38 linhas.
 
 ### Plano de análise
 
@@ -79,6 +80,7 @@ O efeito é uma razão r: em H2 e H4, o tipo mais alto é r× o mais baixo; em H
 
 - O erro tipo I observado fica entre 0,03 e 0,07 nas três hipóteses, como esperado para α = 0,05.
 - **H3 é sensível:** detecta um pico 12% mais lento, porque usa todas as medições no modelo misto.
+- **A simulação supôs 7 dias com 2 execuções por janela.** Com as perdas das duas primeiras noites (no máximo 10 execuções de pico e 13 de madrugada), o poder real de H3 tende a ser um pouco menor. Em H2 e H4 o efeito é pequeno, porque cada URL continua com mais de 20 execuções.
 - **H2 e H4 só detectam diferenças grandes entre os tipos:** 75% no LCP e 50% nas reprovadas. Com 6 URLs por tipo, a variação de uma URL para outra domina. Um resultado não significativo em H2 ou H4 **não** mostra que os tipos são iguais, só que a diferença, se existe, é menor do que o desenho consegue ver. Isso entra na ameaça à validade de conclusão.
 
 ### Limitações do piloto
