@@ -193,9 +193,9 @@ Essas são as regras que o `scripts/validate.py` (B-7, issue #22) implementa. As
 | # | Coluna(s) avaliada(s) | Condição | Ação | Motivo |
 |---|---|---|---|---|
 | D1 | `bloqueada` | `bloqueada == True` | **Descartar** | A PSI mediu uma tela de captcha, login ou erro (status ≠ 200 ou host inesperado), e não a página do estudo. As métricas não descrevem o objeto |
-| D2 | `erro` | `erro` não vazio | **Descartar** | A chamada falhou depois das retentativas, e todas as métricas da linha ficam vazias |
+| D2 | `erro` | `erro` não vazio | **Descartar** | A chamada falhou (HTTP, rede ou runtimeError do Lighthouse), e todas as métricas da linha ficam vazias |
 | D3 | `janela` | `janela == 'fora'` | **Descartar** | A execução começou fora das duas janelas do fator horário (ver "Janelas BRT" abaixo), então não pertence a nenhum nível do fator |
-| D4 | `gatilho` | `gatilho ∉ {schedule, agendador}` | **Descartar** | Só os disparos agendados seguem o calendário do desenho. `workflow_dispatch`, `local` e outros disparos manuais (ex.: `push`, que aparece em `data/raw/testes/`) são testes ou reexecuções fora do sorteio de horários |
+| D4 | `gatilho` | `gatilho ∉ {schedule, agendador}` | **Descartar** | Só os disparos agendados seguem o calendário do desenho. `workflow_dispatch`, `local` e outros disparos manuais (ex.: `push`, que aparece em `data/raw/testes/`) são testes ou reexecuções fora do calendário de horários do desenho |
 
 **Adaptação do texto da issue em D4:** a issue #17 escreve `gatilho != 'schedule'`. Desde 19/11, porém, os disparos agendados vêm do agendador externo (cron-job.org) e são gravados como `gatilho=agendador` (ver [`agendador.md`](agendador.md) e a anomalia 1 em [`anomalias.md`](anomalias.md)). Aplicar o texto literal descartaria a maior parte da coleta. Por isso a regra é o conjunto `{schedule, agendador}`, o mesmo de `GATILHOS_VALIDOS` em `analysis/stats.py`. A intenção da issue (ficar só com os disparos agendados) não muda.
 
