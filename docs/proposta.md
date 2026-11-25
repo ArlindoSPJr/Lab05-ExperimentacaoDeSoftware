@@ -184,7 +184,56 @@ Notas:
 
 ## Regras de validação
 
-_A preencher na issue #17 (#A-6, ciclo 2): regras de descarte e de sinalização no formato condição → ação._
+Regras fixadas depois do piloto (#A-6), **sem mudar o desenho do estudo**. Cada linha de `data/raw/*.csv` passa por todas elas. Uma linha que cai em qualquer regra de descarte sai da análise, e as regras de sinalização só marcam a linha. Os nomes e valores das colunas são os de [`dados.md`](dados.md).
+
+Essas são as regras que o `scripts/validate.py` (B-7, issue #22) implementa. As quatro regras de descarte coincidem com o `filtro_minimo` de `analysis/stats.py`, que a análise já usa.
+
+### Descarte
+
+| # | Coluna(s) avaliada(s) | Condição | Ação | Motivo |
+|---|---|---|---|---|
+| D1 | `bloqueada` | `bloqueada == True` | **Descartar** | A PSI mediu uma tela de captcha, login ou erro (status ≠ 200 ou host inesperado), e não a página do estudo. As métricas não descrevem o objeto |
+| D2 | `erro` | `erro` não vazio | **Descartar** | A chamada falhou depois das retentativas, e todas as métricas da linha ficam vazias |
+| D3 | `janela` | `janela == 'fora'` | **Descartar** | A execução começou fora das duas janelas do fator horário (ver "Janelas BRT" abaixo), então não pertence a nenhum nível do fator |
+| D4 | `gatilho` | `gatilho ∉ {schedule, agendador}` | **Descartar** | Só os disparos agendados seguem o calendário do desenho. `workflow_dispatch`, `local` e outros disparos manuais (ex.: `push`, que aparece em `data/raw/testes/`) são testes ou reexecuções fora do sorteio de horários |
+
+**Adaptação do texto da issue em D4:** a issue #17 escreve `gatilho != 'schedule'`. Desde 19/11, porém, os disparos agendados vêm do agendador externo (cron-job.org) e são gravados como `gatilho=agendador` (ver [`agendador.md`](agendador.md) e a anomalia 1 em [`anomalias.md`](anomalias.md)). Aplicar o texto literal descartaria a maior parte da coleta. Por isso a regra é o conjunto `{schedule, agendador}`, o mesmo de `GATILHOS_VALIDOS` em `analysis/stats.py`. A intenção da issue (ficar só com os disparos agendados) não muda.
+
+### Sinalização sem descarte
+
+| # | Coluna(s) avaliada(s) | Condição | Ação | Como entra na análise |
+|---|---|---|---|---|
+| S1 | `lighthouse_version`, `data_brt`, `ts_inicio_utc` | `lighthouse_version` diferente da versão do início da coleta (a primeira linha válida em `ts_inicio_utc`) | **Sinalizar** as linhas e os dias (`data_brt`) afetados | Os testes rodam duas vezes: com todas as linhas e sem os dias afetados, como no §5.10 do design. Os dois resultados são reportados. Se a conclusão mudar entre eles, a mudança de versão é registrada como ameaça interna. Linhas com `erro` não têm versão e já saem por D2 |
+| S2 | `usou_reserva`, `slot_id`, `url_usada` | `usou_reserva == True` | **Sinalizar** a linha e registrar a troca como anomalia em [`anomalias.md`](anomalias.md) | A linha fica no dataset, porque a unidade de análise é o **slot** (`slot_id`), e não a URL. H2 e H4 agregam por slot. Uma análise de sensibilidade repete H2 e H4 sem as linhas com reserva |
+
+**Como a reserva é acionada** (`scripts/collect.py`, `atualizar_estado` e `resolve_url`): só os slots de **produto** com `url_reserva` em `config/urls.csv` podem trocar. Um produto conta como ausente numa execução quando todas as medições da URL original voltam com status 404/410 ou sem o ID `MLB` na `finalUrl`. Uma tela de captcha não conta como ausência. Com **2 execuções seguidas** sem o produto, o slot é marcado como indisponível em `data/estado_reservas.json`, e a partir da execução seguinte o coletor mede a `url_reserva` e grava `usou_reserva=True`. URLs de categoria e de busca nunca trocam.
+
+### Janelas BRT (decisão de método)
+
+| Janela | Horário de início da execução (BRT) | Nível do fator horário |
+|---|---|---|
+| `pico` | 18h00 a 23h59 | Pico |
+| `madrugada` | 00h00 a 07h59 | Baixa demanda |
+| `fora` | 08h00 a 17h59 | Nenhum (descartada por D3) |
+
+- A janela vale para a **execução inteira**. Ela é calculada uma vez, pelo horário **real** de início (`ts_inicio_utc` convertido para BRT por `janela_brt` em `scripts/collect.py`), e não pelo horário nominal do cron (`cron`).
+- É uma decisão de método, e não um dado medido: os horários agendados (20h07 e 22h07 no pico, 03h07 e 05h07 na madrugada) vêm da fonte de tráfego da seção [Horário de pico](#horário-de-pico). As faixas largas em volta deles definem o que ainda conta como cada nível quando um disparo atrasa. Uma execução atrasada é classificada pelo horário em que mediu de fato, como nas duas execuções da anomalia 1, que ficaram como `madrugada`.
+
+### Efeito das regras nos dados até agora
+
+Contagem em `data/raw/*.csv` (sem `data/raw/testes/`), com as execuções de 19/11 01h04 BRT a 25/11 05h07 BRT, feita em 25/11/2026:
+
+| Regra | Linhas afetadas (de 874) |
+|---|---|
+| D1 `bloqueada == True` | 0 |
+| D2 `erro` não vazio | 1 (`cat-3`, móvel, run `20261121T010740Z`, HTTP 400) |
+| D3 `janela == 'fora'` | 0 |
+| D4 `gatilho ∉ {schedule, agendador}` | 0 (760 `agendador` e 114 `schedule`) |
+| S1 mudança de `lighthouse_version` | 0 (todas as 873 linhas com versão têm `13.6.0`) |
+| S2 `usou_reserva == True` | 0 |
+| **Linhas que ficam na análise** | **873** |
+
+No piloto (18/11 20h07 a 19/11 06h07 BRT, [`relatorio.md`](../analysis/out/piloto/relatorio.md)), as 76 linhas passaram por todas as regras. Os disparos de teste em `data/raw/testes/` (76 linhas, `push` e `workflow_dispatch`, 38 delas na janela `fora`) cairiam em D4.
 
 ## Extensão da coleta
 
