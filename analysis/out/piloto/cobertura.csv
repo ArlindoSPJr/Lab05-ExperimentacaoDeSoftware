@@ -1,0 +1,5 @@
+cron,previsto_brt,run_id,janela_gravada,linhas,linhas_esperadas,bloqueadas,com_erro,com_reserva,mais_de_1_tentativa
+7 23 * * *,18/11 20h07,20261119T040444Z,madrugada,38,38,0,0,0,0
+7 1 * * *,18/11 22h07,20261119T083531Z,madrugada,38,38,0,0,0,2
+7 6 * * *,19/11 03h07,,,0,38,0,0,0,0
+7 8 * * *,19/11 05h07,,,0,38,0,0,0,0
