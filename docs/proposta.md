@@ -247,7 +247,7 @@ No piloto (18/11 20h07 a 19/11 06h07 BRT, [`relatorio.md`](../analysis/out/pilot
 | 2 | A Black Friday (27/11/2026) é uma ameaça à validade interna: banners, campanhas e tráfego atípicos. Dados de 26–28/11 mediriam o site num estado ainda mais atípico que o da semana de "esquenta" já coletada | [design §5.10](superpowers/specs/2026-11-16-mercadolivre-desempenho-acessibilidade-design.md#510-ameaças-à-validade) |
 | 3 | Cronograma: a entrega conjunta S01 + S02 é em **26/11**, e a análise completa (C-6, #24) roda sobre o dataset consolidado na manhã de 25/11, após a execução das 05h07. Uma extensão até 28/11 terminaria depois da entrega e não entraria nela | design, "Cronograma" e "Datas críticas"; [plano de issues](superpowers/plans/2026-11-16-issues-ondas.md) (#B-8, #C-6) |
 | 4 | Ética: cada execução faz 38 carregamentos (19 URLs × 2 perfis) pela PSI no site de terceiros. Seguir medindo sem uma pergunta que precise desses dados seria carga desnecessária, mesmo dentro do limite de 1 req/s | [`etica.md`](etica.md) |
-| 5 | Uma exploratória de 26–28/11 teria no máximo 12 execuções (4 por dia × 3 dias), menos da metade das 28 da coleta principal. Como ela ficaria separada do conjunto principal, não entraria nos testes de H1–H5 e não responderia às hipóteses | design §5.10 e "Datas críticas"; [#B-8](superpowers/plans/2026-11-16-issues-ondas.md) (28 execuções); [Hipóteses](#hipóteses) |
+| 5 | Uma exploratória de 26–28/11 teria no máximo 12 execuções (4 por dia × 3 dias), contra as 28 agendadas da coleta principal. Como ela ficaria separada do conjunto principal, não entraria nos testes de H1–H5 e não responderia às hipóteses | design §5.10 e "Datas críticas"; [#B-8](superpowers/plans/2026-11-16-issues-ondas.md) (28 execuções); [Hipóteses](#hipóteses) |
 
 ### Evidência de que a coleta principal terminou no horário
 
@@ -258,7 +258,7 @@ python -c "import csv,glob; print(max(r['run_id'] for f in glob.glob('data/raw/*
 # 20261125T080734Z
 ```
 
-- A última execução gravada é `run_id=20261125T080734Z`, em [`data/raw/2026-11-25_BRT.csv`](../data/raw/2026-11-25_BRT.csv), com `data_brt=2026-11-25`, `janela=madrugada`, `gatilho=agendador` e `ts_inicio_utc=2026-11-25T08:07:34Z` (05h07 BRT).
+- A última execução gravada é `run_id=20261125T080734Z`, em [`data/raw/2026-11-25_BRT.csv`](../data/raw/2026-11-25_BRT.csv), com `data_brt=2026-11-25`, `janela=madrugada`, `gatilho=agendador` e `ts_inicio_utc=2026-11-25T08:07:34.839023+00:00` (05h07 BRT).
 - Não há nenhuma execução posterior em `data/raw/` nem em `data/raw/testes/`.
 
 ### Consequência operacional (B-8, #23)
@@ -268,7 +268,7 @@ Quem desliga os disparos é **B**, no B-8 (#23, "Release dos JSONs e fim da cole
 | Disparo | O que fazer |
 |---|---|
 | Agendador externo (cron-job.org) | Desativar as 4 tarefas (`lab05-pico-1`, `lab05-pico-2`, `lab05-madrugada-1`, `lab05-madrugada-2`) e **revogar o token** `lab05-agendador` |
-| Agendador de Tarefas do Windows, se houver | Rodar `powershell -File scriptsgendar_windows.ps1 -Remover` no PC onde as tarefas estão instaladas |
+| Agendador de Tarefas do Windows, se houver | Rodar `powershell -File scripts\agendar_windows.ps1 -Remover` no PC onde as tarefas estão instaladas |
 | `schedule` do workflow | Rodar `gh workflow disable collect.yml` ou tirar o bloco `schedule` de `.github/workflows/collect.yml` |
 
 Como não há exploratória, o B-8 desabilita o workflow, e não troca o `--out` para `data/raw/exploratoria/`. Se aparecer alguma linha com `data_brt` posterior a 25/11 05h07 (por exemplo, um disparo que escapou ao desligamento), ela **fica fora do conjunto principal** e é registrada em [`anomalias.md`](anomalias.md).
