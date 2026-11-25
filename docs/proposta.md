@@ -271,6 +271,6 @@ Quem desliga os disparos é **B**, no B-8 (#23, "Release dos JSONs e fim da cole
 | Agendador de Tarefas do Windows, se houver | Rodar `powershell -File scripts\agendar_windows.ps1 -Remover` no PC onde as tarefas estão instaladas |
 | `schedule` do workflow | Rodar `gh workflow disable collect.yml` ou tirar o bloco `schedule` de `.github/workflows/collect.yml` |
 
-Como não há exploratória, o B-8 desabilita o workflow, e não troca o `--out` para `data/raw/exploratoria/`. Se aparecer alguma linha com `data_brt` posterior a 25/11 05h07 (por exemplo, um disparo que escapou ao desligamento), ela **fica fora do conjunto principal** e é registrada em [`anomalias.md`](anomalias.md).
+Como não há exploratória, o B-8 desabilita o workflow, e não troca o `--out` para `data/raw/exploratoria/`. Se aparecer alguma linha com `ts_inicio_utc` posterior a `2026-11-25T08:07:34.839023+00:00`, ou seja, com `run_id` posterior a `20261125T080734Z` (por exemplo, um disparo que escapou ao desligamento), ela **fica fora do conjunto principal** e é registrada em [`anomalias.md`](anomalias.md). O critério é o `ts_inicio_utc` ou o `run_id`, e não o `data_brt`: essa coluna guarda só a data, e uma execução em 25/11 às 20h07 também teria `data_brt=2026-11-25`.
 
 **Aviso a B:** pendente, a cargo do integrante A, que confirma o recebimento pelo B-8 (#23).
