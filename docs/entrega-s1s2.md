@@ -1,5 +1,191 @@
 # Entrega Lab05 S01 + S02 — Desempenho e acessibilidade do site do Mercado Livre
 
+**Sumário**
+
+1. [Evidências dos 3 critérios](#evidências-dos-3-critérios)
+2. [Pergunta de pesquisa](#pergunta-de-pesquisa)
+3. [GQM (template de Basili)](#gqm-template-de-basili)
+4. [Entidades, atributos e escalas](#entidades-atributos-e-escalas)
+5. [Classificação nas 7 categorias de pesquisa (v1)](#classificação-nas-7-categorias-de-pesquisa-v1)
+6. [Hipóteses](#hipóteses)
+7. [Ética](#ética)
+8. [Plano de coleta e análise e resultados do piloto](#plano-de-coleta-e-análise-e-resultados-do-piloto)
+
+As seções 1 a 7 vêm da proposta, escrita antes da coleta: [`evidencias.md`](evidencias.md), [`proposta.md`](proposta.md) (v1, de 17/11/2026, antes do início da coleta em 18/11/2026, 20h07 BRT) e [`etica.md`](etica.md). Em caso de divergência, os documentos de origem valem.
+
+## Evidências dos 3 critérios
+
+Objeto de estudo: o site **https://www.mercadolivre.com.br/** (Mercado Livre Brasil, operado pela MercadoLibre, Inc., Nasdaq: MELI). Nenhum número foi estimado: cada valor foi copiado da fonte indicada, na data de acesso indicada. Valores em dólares americanos (US$), como publicados pela empresa; "mi" = milhões e "bi" = bilhões. Detalhes em [`evidencias.md`](evidencias.md).
+
+| Critério | Evidência | Número | Fonte (link) | Data de acesso |
+|---|---|---|---|---|
+| Real | Site oficial do Mercado Livre no Brasil, público e acessível sem login | — (site no ar; a captura do PSI abaixo confirma que a URL responde e é analisada) | https://www.mercadolivre.com.br/ | 17/11/2026 |
+| Real | Portal oficial de documentação para desenvolvedores (APIs por unidade de negócio, gestão de aplicações, segurança), com rodapé "Copyright © 2026 Mercado Livre Brasil Ltda." | — | https://developers.mercadolivre.com.br/pt_br/api-docs-pt-br | 18/11/2026 |
+| Real | Empresa de capital aberto com página de Relações com Investidores ("The Leading Commerce and Fintech Ecosystem in Latin America") | Listada na Nasdaq como MELI | https://investor.mercadolibre.com/ | 18/11/2026 |
+| Em operação | Relatório trimestral mais recente (release de resultados do 3º tri. de 2026, trimestre encerrado em 30/09/2026, divulgado em 04/11/2026, Form 8-K, anexo 99.1) | Receita líquida e receita financeira: US$ 10.750 mi no 3T26 (+45% a/a), total da região | https://www.sec.gov/Archives/edgar/data/0001099590/000109959026000027/meli-20260930xex991.htm | 18/11/2026 |
+| Em operação | Comunicado recente da empresa (sala de imprensa oficial), de 04/11/2026: "Mercado Libre Revenue Reaches $10.75 billion in Q3 2026, up 45% year over year" | US$ 10,75 bi de receita no 3T26 | https://news.mercadolibre.com/en/financial-results-3erd-quarter-2026 | 18/11/2026 |
+| Em operação | App oficial atualizado recentemente na Google Play (indício de manutenção ativa) | "Atualizado em 18 de nov. de 2026" | https://play.google.com/store/apps/details?id=com.mercadolibre&hl=pt_BR&gl=BR | 18/11/2026 |
+| Em operação (CrUX) | Há dados de usuários reais do Chrome (CrUX) para a URL, no PSI web (pagespeed.web.dev, sem chave), aba **Celular**, recorte **Este URL**: "Período dos últimos 28 dias", "Muitas amostras (Relatório de UX do Chrome)". Captura: `docs/img/crux-2026-11-17.png` | Avaliação das Core Web Vitals: **aprovado**. p75: LCP 2,2 s; INP 164 ms; CLS 0,01; FCP 1,8 s; TTFB 1 s | https://pagespeed.web.dev/ (análise de https://www.mercadolivre.com.br/) | 17/11/2026 |
+| Alto impacto | GMV (volume bruto de mercadorias) do 3T26, **total da região** | US$ 22.818 mi (≈ US$ 23 bi), +38% a/a em US$ e +33% a/a em moeda constante | SEC 8-K 3T26 (link acima) e comunicado de 04/11/2026 (link acima) | 18/11/2026 |
+| Alto impacto | GMV do 3T26 **recortado para o Brasil** | **Valor absoluto em US$: não encontrado** (o release e o comunicado não trazem GMV por país). Só o crescimento: +44% a/a em US$ e +36% a/a em moeda constante; itens vendidos no Brasil +45% a/a | SEC 8-K 3T26 (tabelas de crescimento a/a por país, colunas Q3'25…Q3'26) e comunicado de 04/11/2026 | 18/11/2026 |
+| Alto impacto | Receita líquida e receita financeira do 3T26 **no Brasil** (tabela por segmento: Brazil, Mexico, Argentina, Other Countries, Total) — melhor recorte Brasil em valor absoluto que a fonte oferece | US$ 6.001 mi no Brasil, de US$ 10.750 mi no total (3T25: US$ 4.009 mi) | SEC 8-K 3T26 (link acima), tabela de segmentos | 18/11/2026 |
+| Alto impacto | Compradores únicos ativos do comércio no 3T26, **total da região** | ≈ 94 mi (+22% a/a); itens vendidos: 867 mi | SEC 8-K 3T26 e comunicado de 04/11/2026 (links acima) | 18/11/2026 |
+| Alto impacto | Compradores únicos **recortados para o Brasil** | **Não encontrado.** Procurado no release 3T26 (SEC 8-K), no comunicado de 04/11/2026 e em notícias da imprensa brasileira sobre os resultados de 2026; nenhuma fonte oficial traz a contagem só do Brasil | — | 18/11/2026 |
+| Alto impacto | Audiência mensal do domínio mercadolivre.com.br (Similarweb, página pública, cabeçalho "October 2026"; estimativa de terceiro) | 283,8 mi de visitas nos últimos 3 meses (a página não traz o número de um único mês); rank global #92; rank no Brasil #8; #1 na categoria "Ecommerce & Shopping > Marketplace (In Brazil)" | https://www.similarweb.com/website/mercadolivre.com.br/ | 18/11/2026 |
+| Alto impacto | Downloads do app oficial "Mercado Livre" (desenvolvedor: Mercado Libre) na Google Play — **total mundial**, a loja não recorta por país | "500 mi+ downloads"; 28,4 mi avaliações (nota 4,9); "#3 principais apps gratuitos compras" | https://play.google.com/store/apps/details?id=com.mercadolibre&hl=pt_BR&gl=BR | 18/11/2026 |
+
+![Seção "Entender a experiência dos seus usuários" do PageSpeed Insights para https://www.mercadolivre.com.br/, aba Celular](img/crux-2026-11-17.png)
+
+A captura mostra só a interface pública do PageSpeed Insights, sem login e sem dados pessoais.
+
+**O que não se pode afirmar com estas evidências:**
+- **Recorte Brasil incompleto.** O MercadoLibre não publica GMV nem compradores únicos por país em valor absoluto, só taxas de crescimento por país. O único valor absoluto do Brasil é a **receita** por segmento (US$ 6.001 mi no 3T26, cerca de 56% do total). Ele não deve ser convertido em "GMV do Brasil" nem em "compradores do Brasil".
+- **Downloads.** O número da Google Play é mundial e não inclui a App Store (a página da App Store não pôde ser lida: HTTP 429). Downloads não equivalem a usuários ativos.
+- **Audiência.** Os números do Similarweb são estimativas de um painel de terceiros. Outras ferramentas (por exemplo, Semrush) publicam valores bem diferentes, por isso só um ranking foi usado.
+- **Datas de acesso.** A captura do CrUX é de 17/11/2026; as demais fontes, de 18/11/2026. Valores de páginas dinâmicas (Google Play, Similarweb) podem ter mudado depois.
+
+## Pergunta de pesquisa
+
+> O desempenho e a acessibilidade do site do Mercado Livre variam conforme o tipo de página, o perfil de dispositivo e o horário de acesso? E a medição sintética reflete a experiência dos usuários reais?
+
+A pergunta tem duas partes:
+- a primeira trata do efeito de três fatores controlados pelo grupo (tipo de página, perfil e horário), respondida por H1–H4;
+- a segunda trata da validade da própria medição (sintética × campo), respondida por H5.
+
+**Decisões fixadas antes da coleta** (não mudam depois de ver os dados):
+
+1. **Métricas primárias:** LCP, TTFB e nº de auditorias de acessibilidade reprovadas. Todas as outras métricas são **descritivas** e não entram em teste de hipótese.
+2. **Perfil de H2 e H4:** o teste primário usa o perfil **móvel** do Lighthouse. O desktop é relatado só como análise de sensibilidade.
+3. **Testes bilaterais** em todas as hipóteses (H1–H5), inclusive em H1 e H3, cuja hipótese de pesquisa tem uma direção esperada.
+4. **Correção de Holm** sobre os 5 testes primários, com α = 0,05. Os post-hoc também são corrigidos.
+5. **Unidade de análise:** a URL em H2/H4 (n = 6 por tipo); a medição com efeitos aleatórios de URL e dia em H1/H3; o par por URL em H5.
+6. **Janelas de horário:** pico = execuções das 20h07 e 22h07 BRT; madrugada = execuções das 03h07 e 05h07 BRT. A escolha se apoia no tráfego agregado do IX.br de 18/11/2026 (Max 46,20 Tbps no gráfico diário, com pico entre 20h e 22h e vale por volta das 04h); a justificativa completa está em [`proposta.md`, "Horário de pico"](proposta.md#horário-de-pico).
+
+## GQM (template de Basili)
+
+**Objetivo (Goal):**
+
+| Elemento do template | Preenchimento |
+|---|---|
+| Analisar | o site do Mercado Livre (mercadolivre.com.br) |
+| com o propósito de | caracterizar e comparar |
+| com respeito a | desempenho de carregamento e acessibilidade |
+| do ponto de vista | do usuário final |
+| no contexto de | páginas públicas (categoria, busca, produto e home) medidas com perfis móvel e desktop em horários de pico e de baixa demanda (madrugada) |
+
+**Perguntas (Questions) e métricas (Metrics):**
+
+| Pergunta | Métricas | Papel |
+|---|---|---|
+| Q1. O perfil de dispositivo afeta o carregamento? | **LCP** (primária); FCP, Speed Index, TBT (descritivas) | H1 |
+| Q2. O tipo de página afeta desempenho e peso? | **LCP** (primária); peso total (bytes) e nº de requisições (descritivas) | H2 (LCP). Bytes e requisições são só descritivas |
+| Q3. O horário de pico piora a resposta do servidor? | **TTFB** (auditoria `server-response-time`, primária); LCP (descritiva nesta pergunta) | H3 |
+| Q4. Quantas barreiras de acessibilidade existem e onde? | **Nº de auditorias de acessibilidade reprovadas** (primária), também detalhado por tipo de auditoria (contraste, rótulos, `alt` etc.); nota de acessibilidade (descritiva) | H4 |
+| Q5. A medição sintética reflete a experiência dos usuários reais? | LCP sintético (mediana por URL, perfil móvel) × p75 de LCP do CrUX; categoria CrUX (FAST/AVERAGE/SLOW). O INP do CrUX é só descritivo, porque o Lighthouse não mede INP (o TBT é apenas um proxy) | H5 |
+
+As métricas primárias foram fixadas antes da coleta. As notas de 0 a 100 do Lighthouse não são primárias, de propósito, por causa da Lei de Goodhart ([`proposta.md`, "Armadilhas de medição"](proposta.md#armadilhas-de-medição)).
+
+## Entidades, atributos e escalas
+
+| Métrica | Entidade | Atributo | Direta / derivada | Escala | Estatísticas permitidas |
+|---|---|---|---|---|---|
+| TTFB | Recurso (infraestrutura do ML) | Externo: tempo de resposta do servidor | Direta (observada no carregamento) | Razão | Todas (média geométrica, razões, testes paramétricos ou não paramétricos) |
+| LCP, FCP, Speed Index, TBT | Produto (página web) | Externo: tempo percebido | **Derivada**: o PSI simula o throttling (Lantern) a partir de um carregamento | Razão | Todas, analisadas em escala log |
+| Peso total, nº de requisições | Produto (página web) | Interno: tamanho | Direta | Razão | Todas |
+| Nº de auditorias de acessibilidade reprovadas | Produto (página web) | Externo: acessibilidade (barreiras detectáveis automaticamente) | Direta (contagem) | Razão (discreta) | Mediana, contagens, testes não paramétricos |
+| Nota de desempenho e de acessibilidade (0–100) | Produto | Externo, agregado | **Derivada**: soma ponderada de curvas log-normais | Tratada como **ordinal** | Mediana, percentis, testes de postos. **Não usar médias** |
+| Categoria CrUX (FAST/AVERAGE/SLOW) | Produto em uso | Externo: experiência do usuário | Derivada (p75 de campo) | Ordinal | Moda, proporções, kappa |
+| p75 de LCP do CrUX | Produto em uso | Externo | Derivada (agregação de 28 dias) | Razão | Comparação pareada |
+
+Consequências da escala para a análise:
+- os tempos (razão) são analisados em log e os efeitos são relatados como **razões** (ex.: "1,15× mais lento");
+- a contagem de auditorias reprovadas é discreta e quase constante entre repetições, por isso usa testes de postos sobre o valor agregado por URL;
+- as notas e a categoria CrUX são ordinais e só aceitam mediana, percentis, proporções e testes de postos ou de concordância.
+
+### Mapeamento na ISO/IEC 25010
+
+**Versão usada: ISO/IEC 25010:2023** (2ª edição, que substitui a de 2011). Fonte: página oficial da norma na ISO, <https://www.iso.org/standard/78176.html>, e prévia oficial do prefácio em <https://webstore.ansi.org/preview-pages/ISO/preview_ISO+IEC+25010-2023.pdf> (acesso em 17/11/2026).
+
+| Característica (2023) | Subcaracterística | Métricas do estudo |
+|---|---|---|
+| Eficiência de desempenho (*performance efficiency*) | Comportamento temporal (*time behaviour*) | TTFB, LCP, FCP, Speed Index, TBT |
+| Eficiência de desempenho | Utilização de recursos (*resource utilization*) | Peso total (bytes), nº de requisições |
+| Capacidade de interação (*interaction capability*, que substitui "usabilidade" da versão 2011) | Inclusividade (*inclusivity*) e assistência ao usuário (*user assistance*) | Nº de auditorias de acessibilidade reprovadas, por tipo; nota de acessibilidade |
+
+Na versão 2011, a acessibilidade era subcaracterística de *usabilidade*. A versão 2023 a divide em *inclusividade* e *assistência ao usuário*, dentro de *capacidade de interação*.
+
+### SLI/SLO de referência
+
+- **SLO:** LCP ≤ 2,5 s no p75, que é o limiar "bom" dos Core Web Vitals. Fonte: web.dev, "Largest Contentful Paint (LCP)", <https://web.dev/articles/lcp> (acesso em 17/11/2026).
+- **SLI:** a fração das medições de cada combinação tipo × perfil × horário que cumpre LCP ≤ 2,5 s.
+- O uso é **descritivo** e não entra em teste de hipótese. Ele adapta ao site do ML a ideia de medir a operação (Lab03), já que não há acesso aos deploys para calcular métricas DORA.
+
+## Classificação nas 7 categorias de pesquisa (v1)
+
+| Categoria | Classificação | Justificativa |
+|---|---|---|
+| Natureza | Aplicada | Gera conhecimento sobre um software em produção, com impacto direto para os usuários e para a empresa. Não busca teoria geral |
+| Objetivos | Descritiva e explicativa | Descritiva porque caracteriza desempenho e acessibilidade (Q1–Q4). Explicativa porque testa se tipo de página, perfil e horário explicam a variação (H1–H4) |
+| Abordagem | Quantitativa | Todas as métricas são numéricas e a análise usa estatística descritiva e testes de hipótese |
+| Procedimentos | Quase-experimento de campo, com análise de dados de operação (CrUX) | Os fatores e níveis são escolhidos pelo grupo, mas os objetos (URLs) são escolhidos por critério, sem randomização, e o sistema não é controlado. O CrUX traz dados de operação de usuários reais |
+| Tempo | Longitudinal curto | Medidas repetidas 4 vezes por dia durante 7 dias (18/11 a 25/11/2026) |
+| Controle | Parcial | O grupo controla as URLs, os horários, o perfil e a ordem das chamadas (sorteada). Não controla o ML (deploys, promoções) nem a infraestrutura do PSI |
+| Nível de evidência | Moderado | Ganha força com o desenho fatorial, as repetições e a triangulação com o CrUX. Perde com a falta de randomização, o período atípico (semana anterior à Black Friday) e a medição sintética |
+
+**Pendência (integrante A):** conferir esta tabela com o material da **Aula 8**. Ela foi montada a partir do §5.5 do [design](superpowers/specs/2026-11-16-mercadolivre-desempenho-acessibilidade-design.md), sem acesso ao material da aula. A versão revisada das 7 categorias é entrega da S03.
+
+## Hipóteses
+
+Todas as hipóteses foram **fixadas antes da coleta**. Todos os testes são **bilaterais** e passam pela **correção de Holm** sobre os 5 testes primários (α = 0,05).
+
+| | Hipótese de pesquisa (H1) | H0 | Métrica (primária) | Unidade de análise | Perfil usado | Teste (a priori) |
+|---|---|---|---|---|---|---|
+| H1 | O LCP no perfil móvel do Lighthouse é diferente do LCP no perfil desktop (direção esperada: maior no móvel) | Não há diferença de LCP entre os perfis | LCP | Medição, com efeitos aleatórios de URL e dia | Móvel × desktop (é o próprio fator) | Modelo linear misto em log, efeito como razão com IC 95% |
+| H2 | O LCP difere entre categoria, busca e produto | Não há diferença de LCP entre os tipos | LCP | **URL** (mediana por URL, n = 6 por tipo) | **Móvel** (desktop como sensibilidade) | Kruskal-Wallis, ε², post-hoc de Dunn |
+| H3 | O TTFB no pico é diferente do TTFB na madrugada (direção esperada: maior no pico) | Não há diferença de TTFB entre pico e madrugada | TTFB | Medição, com efeitos aleatórios de URL e dia | Ambos (o perfil entra como fator no modelo) | Modelo linear misto em log, efeito como razão com IC 95% |
+| H4 | O nº de auditorias de acessibilidade reprovadas difere entre os tipos | Não há diferença no nº de reprovadas entre os tipos | Nº de auditorias reprovadas | **URL** (valor modal por URL, n = 6 por tipo) | **Móvel** (desktop como sensibilidade) | Kruskal-Wallis, ε², post-hoc de Dunn |
+| H5 | O LCP sintético difere do p75 de LCP do CrUX (análise de concordância) | Não há diferença sistemática entre o LCP sintético e o p75 do CrUX | LCP | Par por URL (só as URLs com dados no CrUX) | Móvel | Wilcoxon pareado, Spearman, Bland-Altman e kappa de Cohen nas categorias |
+
+Notas:
+- **Bilateralidade:** H1 e H3 têm uma direção esperada, mas o teste é bilateral para não descartar um resultado no sentido oposto (ex.: madrugada mais lenta por janelas de manutenção).
+- **H1 é parcialmente verdadeira por construção**, porque o perfil móvel aplica throttling. O interesse está no **tamanho** da diferença e na interação com tipo e horário, não só no p-valor. Isso é tratado como ameaça de construto.
+- **H2 e H4 usam a URL como unidade** porque as repetições da mesma URL não são amostras independentes (a acessibilidade quase não muda entre repetições). Usar as 84 medições como amostras seria pseudorreplicação.
+- **H5:** as URLs sem dados no CrUX são listadas, e o valor da origem é usado só como referência.
+- A home fica fora de todos os testes e entra só na descritiva.
+
+## Ética
+
+Versão resumida. O documento completo, com os `robots.txt` lidos, a conferência URL a URL e os termos de uso, está em [`etica.md`](etica.md) (registro de 18/11/2026).
+
+| Pergunta | Resposta |
+|---|---|
+| Alguma URL de `config/urls.csv` é proibida pelo `robots.txt` (`User-agent: *`)? | **Não.** As 6 categorias, as 6 buscas e a home são permitidas. |
+| As 12 URLs de produto (`url` e `url_reserva`) são permitidas? | **Sim**, as 12, incluindo a reserva `/up/MLBU3319410517` de `pro-6`. |
+| Há regra que nomeia o PageSpeed Insights / Lighthouse? | **Não.** Vale o grupo `User-agent: *`. |
+| Achados que pedem decisão do coordenador | (1) Os 3 hosts bloqueiam `ClaudeBot` e `Claude-User` em `/`, e a seleção da #5 foi feita com um agente Claude no navegador. (2) O caminho `/mais-vendidos/MLB`, usado para escolher os produtos, é proibido para `*`. (3) O texto atual dos Termos e Condições do ML não foi lido no site oficial. |
+
+**Quem acessa as páginas na coleta.** O nosso código (GitHub Actions) não baixa páginas do ML: ele chama a API do PageSpeed Insights, e é a infraestrutura do Google que carrega cada URL, 1 carregamento por chamada, sem seguir links. Mesmo assim, o grupo trata o PSI como se fosse um robô seu e só pede URLs permitidas pelo grupo `User-agent: *` dos 3 hosts (`www.`, `lista.` e `produto.mercadolivre.com.br`).
+
+**Regras do estudo** (obrigatórias para o coletor e para os integrantes):
+
+1. **No máximo 1 requisição por segundo** a qualquer host. Chamadas em sequência, com ≥ 2 s entre o fim de uma e o início da próxima, sem paralelismo. Cada URL é carregada 2 vezes por execução (móvel e desktop), em 4 execuções por dia (20h07, 22h07, 03h07 e 05h07 BRT), o que dá cerca de 0,0018 req/s de média por site.
+2. **Sem teste de carga ou estresse** em sistemas do ML ou do Google. O volume é fixo: 38 chamadas por execução, mais no máximo 2 novas tentativas por chamada com erro (teto de 114).
+3. **Sem login.** Nenhuma URL exige conta, e nenhuma credencial do ML é usada.
+4. **Sem dados pessoais.** Só páginas públicas de catálogo. Não se guardam nomes, avaliações, perguntas de usuários, dados de vendedores pessoa física nem a localização de entrega.
+5. **Capturas de tela removidas antes de publicar.** O coletor apaga do JSON do Lighthouse as auditorias `final-screenshot`, `screenshot-thumbnails` e `full-page-screenshot`. O JSON nunca entra no git.
+6. **Chave só no secret `PSI_API_KEY`.** Nunca em código, configuração versionada ou logs (Google APIs ToS §4(b)).
+7. **Detecção de bloqueio e descarte.** Se o `finalUrl` contiver `/captcha/` ou `/gz/account-verification`, se o título for "Segurança — Mercado Livre", se o `finalUrl` for de login, se o status HTTP for ≠ 200 ou se a página for de erro, a medição é marcada como `bloqueada` e excluída da análise. O CAPTCHA nunca é resolvido nem contornado, e não se trocam User-Agent, IP ou chave.
+8. **Respeito ao `robots.txt`.** Toda URL nova ou trocada passa pela checagem de [`etica.md`, seção 3](etica.md#3-urls-de-produto-conferência-e-regra-de-checagem) antes do commit.
+9. **Páginas proibidas só à mão.** `/mais-vendidos/MLB…` e outros caminhos proibidos só podem ser abertos por um integrante, num navegador comum, para selecionar URLs. Nunca por script, agente ou PSI.
+10. **Agentes de IA:** recomendação de [`etica.md`, seção 5](etica.md#5-achado-bloqueio-a-claudebot-e-claude-user): nenhum agente de IA abre páginas do ML; o que for preciso ver no site é feito por um integrante, à mão. A decisão é do coordenador.
+
+**Pontos de atenção registrados em `etica.md`:**
+- **Uso de agente de IA.** Um agente Claude abriu páginas do ML pelo Chrome do integrante em 17 e 18/11/2026 (seleção da #5 e leitura dos `robots.txt`), e em 18/11/2026, 19h13 BRT, um agente fez 1 chamada à API do PSI para a home, autorizada pelo integrante B (issue #7). Esse uso entra nas limitações do documento final.
+- **Termos do ML não lidos na fonte oficial.** Nenhuma cláusula é citada como confirmada. A avaliação provisória é que medir desempenho e acessibilidade por 1 carregamento do PSI, sem conta e sem guardar conteúdo, fica fora do alvo de uma cláusula contra robôs e scraping, mas isso é uma interpretação do grupo.
+- **Google APIs ToS §5(e).** O JSON do Lighthouse (sem as capturas) é guardado como dado bruto de pesquisa; o grupo entende que métricas e auditorias são o propósito da API, e não conteúdo de terceiros. Isso é uma interpretação, registrada como limitação.
+
+**Pendências** (de [`etica.md`, seção 8](etica.md#8-pendências)): ler os Termos e Condições Gerais do ML e registrar as cláusulas sobre robôs e automação (integrante A); ler a cota da PSI API no console do projeto (quem criou a chave); decidir a política sobre agentes de IA e declarar o uso já feito nas limitações (coordenador / grupo).
+
 ## Plano de coleta e análise e resultados do piloto
 
 ### Desenho fatorial
