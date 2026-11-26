@@ -85,3 +85,10 @@ def test_decidir_madrugada_usa_o_arquivo_do_dia_seguinte(tmp_path):
          "ts_inicio_utc": "2026-11-19T06:07:30+00:00", "erro": ""},
     ])
     assert decidir(utc("2026-11-20T06:17:00"), tmp_path) == (True, "7 6 * * *")
+
+
+def test_decidir_nao_coleta_depois_do_fim(tmp_path):
+    # #A-8: a coleta acaba depois da execução de 25/11 05h07 BRT.
+    assert decidir(utc("2026-11-25T08:07:00"), tmp_path) == (True, "7 8 * * *")
+    assert decidir(utc("2026-11-25T23:07:00"), tmp_path) == (False, "")
+    assert decidir(utc("2026-11-27T01:07:00"), tmp_path) == (False, "")

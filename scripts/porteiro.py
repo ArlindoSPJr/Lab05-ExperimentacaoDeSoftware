@@ -27,6 +27,9 @@ HORARIOS = {"7 23 * * *": (20, 7), "7 1 * * *": (22, 7), "7 6 * * *": (3, 7), "7
 ANTES = timedelta(minutes=5)
 DEPOIS = timedelta(minutes=60)
 GATILHOS_DE_COLETA = {"schedule", "agendador"}
+# Fim da coleta principal (#A-8, #B-8): a última execução é a de 25/11/2026 05h07 BRT
+# e não há extensão até 28/11. Daqui em diante nenhum disparo agendado mede.
+FIM_DA_COLETA = datetime(2026, 11, 25, 9, 10, tzinfo=timezone.utc)  # 06h10 BRT
 
 
 def _nominal(agora_utc: datetime, cron: str) -> datetime:
@@ -45,6 +48,8 @@ def slot_atual(agora_utc: datetime) -> str | None:
 
 def decidir(agora_utc: datetime, raw_dir) -> tuple[bool, str]:
     """Devolve (coletar, cron). Coleta se há um horário aberto que ainda não foi medido."""
+    if agora_utc >= FIM_DA_COLETA:
+        return False, ""
     cron = slot_atual(agora_utc)
     if cron is None:
         return False, ""
@@ -70,6 +75,7 @@ def main() -> int:
     agora = datetime.now(timezone.utc)
     coletar, cron = decidir(agora, args.raw)
     motivo = ("horário aberto e ainda não medido" if coletar
+              else "coleta encerrada em 25/11 (#A-8)" if agora >= FIM_DA_COLETA
               else "fora da tolerância de todos os horários" if not cron
               else "horário já medido por outra tentativa")
     print(f"{agora.astimezone(BRT):%d/%m %H:%M} BRT -> coletar={coletar} cron='{cron}' ({motivo})")
