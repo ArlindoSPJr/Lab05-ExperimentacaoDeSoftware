@@ -10,8 +10,12 @@
 6. [Hipóteses](#hipóteses)
 7. [Ética](#ética)
 8. [Plano de coleta e análise e resultados do piloto](#plano-de-coleta-e-análise-e-resultados-do-piloto)
+9. [Coleta completa e dados validados](#coleta-completa-e-dados-validados)
+10. [Resultados](#resultados)
+11. [Ameaças à validade (v1)](#ameaças-à-validade-v1)
+12. [Checklist da entrega S01 + S02](#checklist-da-entrega-s01--s02)
 
-As seções 1 a 7 vêm da proposta, escrita antes da coleta: [`evidencias.md`](evidencias.md), [`proposta.md`](proposta.md) (v1, de 17/11/2026, antes do início da coleta em 18/11/2026, 20h07 BRT) e [`etica.md`](etica.md). Em caso de divergência, os documentos de origem valem.
+As seções 1 a 7 vêm da proposta, escrita antes da coleta: [`evidencias.md`](evidencias.md), [`proposta.md`](proposta.md) (v1, de 17/11/2026, antes do início da coleta em 18/11/2026, 20h07 BRT) e [`etica.md`](etica.md). A seção 8 é o plano e o piloto. As seções 9 a 11 foram escritas em 26/11/2026, depois do fim da coleta (25/11/2026, 05h07 BRT) e da análise completa. Em caso de divergência, os documentos de origem valem.
 
 ## Evidências dos 3 critérios
 
@@ -274,3 +278,105 @@ O efeito é uma razão r: em H2 e H4, o tipo mais alto é r× o mais baixo; em H
 - Só 2 execuções por URL: as variâncias são uma ordem de grandeza, não um valor preciso.
 - Não há execução de pico nem variação entre dias no piloto. Na simulação, a variação entre dias veio dos dias coletados até 23/11.
 - A simulação supõe um LCP log-normal e não reproduz os dois níveis do LCP das categorias. O poder real de H2 tende a ser menor que o simulado.
+
+## Coleta completa e dados validados
+
+A coleta principal foi de **18/11/2026, 20h07, a 25/11/2026, 05h07 BRT**, e foi encerrada nessa data, sem extensão para a Black Friday ([`proposta.md`, "Extensão da coleta"](proposta.md#extensão-da-coleta)).
+
+| Item | Valor | Fonte |
+|---|---|---|
+| Execuções previstas | 28 (4 por dia × 7 dias), 1.064 linhas | design §5.6 |
+| Execuções no dataset | **23** (10 de pico e 13 de madrugada), **873 linhas** | [`data/processed/dataset.csv`](../data/processed/dataset.csv) |
+| Reconciliação | 873 no dataset + 1 excluída + 38 × 5 execuções ausentes = 1.064 (fecha) | [`anomalias.md`, "Validação da coleta principal"](anomalias.md#validação-da-coleta-principal-scriptsvalidatepy-b-7) |
+| Linhas excluídas | 1 (0,1%): `cat-3`, móvel, pico de 20/11, erro 400 da PSI depois de 3 tentativas (regra D2) | idem |
+| Bloqueios e URLs reserva | nenhum | idem |
+| Versão do Lighthouse | 13.6.0 em todas as linhas (nenhuma mudança de versão, regra S1) | idem |
+| JSONs brutos da PSI | release `coleta-principal` do repositório (fora do git, por ética) | [`anomalias.md`](anomalias.md), #B-8 |
+
+- **Dados versionados:** os CSVs brutos de cada dia estão em `data/raw/` e o dataset validado em `data/processed/dataset.csv`, gerado por `python scripts/validate.py` com as regras de descarte (D1–D4) e de sinalização (S1–S2) da [`proposta.md`](proposta.md#regras-de-validação). A análise lê só o dataset validado.
+- **Anomalias da coleta** ([`anomalias.md`](anomalias.md)):
+  1. **Noite de 18→19/11:** o `schedule` do GitHub atrasou as duas execuções de pico, que caíram na madrugada e contam como as madrugadas de 19/11, e não disparou as duas de madrugada.
+  2. **Noite de 19→20/11:** o `schedule` disparou só duas vezes; o porteiro recusou um disparo fora da tolerância, e só a execução das 05h07 foi medida. Desde 20/11, os disparos vêm do agendador externo, e a coleta ficou completa.
+  3. **25/11, 20h07:** uma execução depois do fim da coleta gravou 38 linhas no CSV bruto, que ficaram fora do dataset. O workflow foi desligado em 26/11.
+- **Efeito no desenho:** as noites de 18/11 e 19/11 ficaram sem pico, e a madrugada tem 3 execuções a mais que o pico (13 × 10).
+
+## Resultados
+
+Todos os números desta seção vêm de `python analysis/analise.py --input data/processed/dataset.csv` (873 linhas, 23 execuções). O relatório completo está em [`analysis/out/relatorio.md`](../analysis/out/relatorio.md), e as tabelas em `analysis/out/*.csv`.
+
+### Descritiva
+
+Medianas por tipo, perfil e janela ([`descritiva_agregado.csv`](../analysis/out/descritiva_agregado.csv), [`sli_lcp.csv`](../analysis/out/sli_lcp.csv)). SLI = fração das medições com LCP ≤ 2,5 s, o limiar "bom" dos Core Web Vitals.
+
+| Tipo | Perfil | LCP madrugada (ms) | LCP pico (ms) | TTFB madrugada / pico (ms) | Reprovadas | SLI madrugada / pico |
+|---|---|---|---|---|---|---|
+| Categoria | desktop | 995 | 1.070 | 9 / 9 | 2 | 100% / 100% |
+| Categoria | móvel | 3.217 | 3.550 | 12,5 / 11 | 2 | 0% / 0% |
+| Busca | desktop | 1.476 | 1.373 | 28 / 28 | 4 | 96% / 97% |
+| Busca | móvel | 4.092 | 4.394 | 25,5 / 28 | 4 | 0% / 0% |
+| Produto | desktop | 1.466 | 1.402 | 27 / 27 | 5 | 100% / 100% |
+| Produto | móvel | 4.745 | 4.645 | 25 / 25 | 4 | 0% / 0% |
+| Home (referência) | desktop | 1.263 | 1.219 | 22 / 19,5 | 4 | 100% / 100% |
+| Home (referência) | móvel | 5.885 | 3.998 | 19 / 40 | 3 | 0% / 0% |
+
+- **No desktop**, praticamente todas as medições cumprem o limiar de 2,5 s; **no perfil móvel, nenhuma** cumpre, em nenhum tipo de página nem horário.
+- O TTFB fica na casa das dezenas de ms nos dois perfis e nas duas janelas.
+- As categorias têm o menor número de auditorias de acessibilidade reprovadas (2), contra 4 a 5 na busca e no produto.
+- Boxplots: [`boxplot_lcp_ms.png`](../analysis/out/boxplot_lcp_ms.png), [`boxplot_ttfb_ms.png`](../analysis/out/boxplot_ttfb_ms.png) e [`boxplot_a11y_reprovadas.png`](../analysis/out/boxplot_a11y_reprovadas.png).
+
+### Testes de hipótese
+
+Testes bilaterais, com correção de Holm sobre os 5 testes primários ([`tabela_hipoteses.csv`](../analysis/out/tabela_hipoteses.csv)). As razões têm IC de Wald do modelo misto em log; o ε² tem IC percentil por bootstrap (2.000 reamostragens).
+
+| Hipótese | Teste | n | Efeito (IC 95%) | p | p de Holm | Decisão (α = 0,05) |
+|---|---|---|---|---|---|---|
+| H1: o LCP difere entre os perfis | modelo misto, log(LCP) | 827 medições | razão móvel/desktop = **3,58** (3,44–3,72) | < 0,001 | < 0,001 | rejeita H0 |
+| H2: o LCP difere entre os tipos (móvel) | Kruskal-Wallis, mediana por URL | 18 URLs | ε² = 0,08 (0,01–0,65); H = 1,28 | 0,529 | 0,529 | não rejeita H0 |
+| H3: o TTFB difere entre pico e madrugada | modelo misto, log(TTFB) | 827 medições | razão pico/madrugada = **1,05** (0,97–1,13) | 0,233 | 0,466 | não rejeita H0 |
+| H4: as reprovadas diferem entre os tipos (móvel) | Kruskal-Wallis, moda por URL | 18 URLs | ε² = **0,75** (0,73–0,91); H = 12,79 | 0,002 | 0,005 | rejeita H0 |
+| H5: o LCP sintético concorda com o CrUX (móvel) | Wilcoxon pareado | 18 pares | kappa = −0,10; diferença média de **1.964 ms** | < 0,001 | < 0,001 | rejeita H0 (não há concordância) |
+
+- **H1:** o LCP no perfil móvel é 3,6 vezes o do desktop, na média dos tipos e horários. O Cliff's delta sobre as medianas por URL é 1,00 (IC 1,00–1,00): todas as 18 URLs são mais lentas no móvel ([`cliffs_delta.csv`](../analysis/out/cliffs_delta.csv)). O resultado é esperado por construção, porque o perfil móvel aplica limitação de rede e CPU; o que interessa é o tamanho da diferença.
+- **H2:** não houve diferença detectável de LCP entre os tipos no perfil móvel. Pela simulação de poder (seção 8), o desenho só detecta diferenças acima de ~75% entre o tipo mais lento e o mais rápido, então o resultado **não** mostra que os tipos são iguais. Na sensibilidade com o desktop, fora do Holm, a diferença aparece (H = 8,98, p = 0,011, ε² = 0,53; [`sensibilidade_desktop.csv`](../analysis/out/sensibilidade_desktop.csv)). No móvel, o LCP das categorias alterna entre ~3 s e ~10 s, o que espalha os valores.
+- **H3:** o horário de pico não piorou o TTFB de forma detectável. O IC (0,97–1,13) exclui uma piora maior que 13%, e o desenho detectava um pico ~12% mais lento. O Cliff's delta de horário é 0,07 (IC −0,07 a 0,23).
+- **H4:** o número de auditorias reprovadas difere entre os tipos, com efeito grande. No post-hoc de Dunn (p de Holm), as categorias têm menos reprovadas que a busca (p = 0,002) e que o produto (p = 0,014); busca e produto não diferem (p = 0,499). O desktop dá o mesmo resultado (p = 0,001).
+- **H5:** o LCP sintético móvel fica, em média, 1.964 ms acima do p75 do CrUX (limites de concordância de −1.836 a 5.764 ms), sem correlação (Spearman ρ = 0,05) e sem concordância nas categorias FAST/AVERAGE/SLOW (kappa = −0,10). Todas as 18 URLs têm dado de campo da própria URL. Gráfico: [`bland_altman.png`](../analysis/out/bland_altman.png).
+
+### Diagnóstico e decisões de análise
+
+- **Alternativa robusta (ART):** o critério, fixado antes de olhar os p-valores, era reajustar com postos alinhados se mais de 5% dos resíduos padronizados passassem de ±3. Só 0,5% (H1) e 0,7% (H3) passaram, então valem os modelos em log ([`diagnostico_residuos.csv`](../analysis/out/diagnostico_residuos.csv)). O QQ-plot de H1 mostra uma cauda superior mais pesada, que vem do LCP em dois níveis das categorias ([`residuos_H1.png`](../analysis/out/residuos_H1.png), [`residuos_H3.png`](../analysis/out/residuos_H3.png)).
+- **Mudança de versão do Lighthouse:** não houve, então a rodada sem os dias afetados não se aplica.
+- **A home** entra só na descritiva, como referência.
+
+## Ameaças à validade (v1)
+
+A tabela completa, com as 19 ameaças, a mitigação de cada uma e a origem, está em [`ameacas.md`](ameacas.md) (v1, escrita em 25/11/2026). O resumo abaixo acrescenta o que os resultados da seção 10 mostraram. A versão final sai na S03 (#26).
+
+| Tipo | Principais ameaças | Mitigação | O que os resultados mostraram |
+|---|---|---|---|
+| **Conclusão** | Baixo poder em H2 e H4 (6 URLs por tipo); perda de 5 execuções e desbalanceamento (10 de pico × 13 de madrugada); LCP em dois níveis nas categorias; comparações múltiplas | Tamanho de efeito com IC; simulação do efeito mínimo detectável; Holm; agregação por URL; critério do ART fixado a priori | H2 não significativo deve ser lido à luz do poder; o critério do ART não foi acionado (0,5% e 0,7% de resíduos além de ±3) |
+| **Interna** | Esquenta da Black Friday durante toda a coleta; pico e madrugada cobrem dias diferentes; mudanças no site; mudança de versão do Lighthouse; falhas do agendamento | Calendário promocional registrado; efeito aleatório de dia; ordem sorteada; janela pelo horário real; porteiro e agendador externo | Nenhuma mudança de versão; nenhuma URL reserva; 1 linha excluída em 874 |
+| **Construto** | "Perfil móvel" é limitação simulada (4G lento e CPU 1,2×), não um celular real; TTFB pequeno, provavelmente de borda (CDN); LCP sintético × usuário real; nota de acessibilidade ≠ WCAG; Goodhart, Campbell e McNamara | Chamar o fator de *perfil*; métricas brutas como primárias; triangular com o CrUX (H5); analisar as auditorias por tipo | **H5 confirmou a ameaça:** o LCP sintético não representa o usuário real (diferença média de ~2 s, ρ = 0,05, kappa = −0,10). Os valores absolutos servem para comparar fatores, não para dizer o que o usuário vê |
+| **Externa** | O teste da PSI roda na América do Norte; 19 URLs populares não representam o catálogo; uma semana atípica (antes da Black Friday) não representa o ano | Usar só diferenças relativas; CrUX como referência de campo; limitar as conclusões a páginas populares do ML na semana anterior à Black Friday de 2026 | Sem mudança |
+
+## Checklist da entrega S01 + S02
+
+Itens pedidos no enunciado (seção 7 do PDF), com onde cada um está.
+
+**Lab05S01 — Proposta**
+
+- [x] Software com evidências dos três critérios (real, em operação, alto impacto): seção 1 e [`evidencias.md`](evidencias.md)
+- [x] Pergunta de pesquisa: seção 2
+- [x] Caminho(s) escolhido(s): medir o serviço de fora (PSI) combinado com a avaliação da qualidade do produto pela ISO/IEC 25010 (desempenho e acessibilidade): seções 2, 4 e 8
+- [x] Primeira versão das 7 categorias: seção 5
+- [x] Plano de coleta e de análise: seções 6 e 8
+- [x] Coleta piloto: seção 8 e [`analysis/out/piloto/relatorio.md`](../analysis/out/piloto/relatorio.md)
+
+**Lab05S02 — Coleta, análise e ameaças**
+
+- [x] Coleta completa: seção 9 (23 execuções, 873 linhas)
+- [x] Dados validados e versionados: seção 9, [`data/processed/dataset.csv`](../data/processed/dataset.csv), `data/raw/` e [`anomalias.md`](anomalias.md)
+- [x] Análise descritiva: seção 10 e [`analysis/out/`](../analysis/out/)
+- [x] Testes de hipótese: seção 10 e [`tabela_hipoteses.csv`](../analysis/out/tabela_hipoteses.csv)
+- [x] Tamanho do efeito: seção 10 (razões com IC, ε² e Cliff's delta com IC por bootstrap, kappa)
+- [x] Ameaças à validade: seção 11 e [`ameacas.md`](ameacas.md)
