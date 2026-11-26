@@ -118,3 +118,15 @@ Gerado por `python scripts/validate.py` a partir de `data/raw/*.csv` (sem subpas
 | `par_calendario` | texto (`AAAA-MM-DD <cron>`) | Par do calendário do desenho (28 pares `data_brt` × `cron`) que a execução ocupa. Difere do `data_brt`/`cron` da linha só nas execuções remanejadas (ex.: o pico de 18/11 que atrasou e mediu na madrugada de 19/11, anomalia 1). Fica vazio numa execução extra |
 
 O recorte usa o `ts_inicio_utc` da execução, em [2026-11-18T21:00Z, 2026-11-25T11:00Z), ou seja, de 18/11 18h00 a 25/11 08h00 BRT. A reconciliação com as 1.064 medições previstas e cada exclusão ficam em [`anomalias.md`](anomalias.md#validação-da-coleta-principal-scriptsvalidatepy-b-7).
+
+## JSONs brutos (release `coleta-principal`, #B-8)
+
+As respostas completas da PSI não ficam no git (cerca de 3 MB por execução). Cada execução publicava os JSONs como artifact do Actions, que expira em 90 dias, e o B-8 os juntou na release [`coleta-principal`](https://github.com/ArlindoSPJr/Lab05-ExperimentacaoDeSoftware/releases/tag/coleta-principal), publicada em 26/11/2026:
+
+| Arquivo | Conteúdo |
+|---|---|
+| `json-brutos.zip` | As 23 execuções do dataset consolidado, com 873 JSONs, um por linha de `data/processed/dataset.csv`. A única linha com erro não tem JSON. Caminho no zip: `<run_id>/<slot_id>_<strategy>.json` |
+| `json-fora-do-conjunto.zip` | 3 execuções fora da análise: os testes manuais `20261118T221819Z` e `20261119T133108Z` e a execução `20261125T230736Z`, que rodou depois do fim da coleta ([anomalia 3](anomalias.md#anomalia-3-execução-depois-do-fim-da-coleta-25112026-20h07)) |
+| `*-manifesto.csv` | Uma linha por JSON: `run_id`, `gh_run_id` (run do Actions), `arquivo`, `bytes`, `sha256` e `observacao`. Também está dentro de cada zip, como `MANIFESTO.csv` |
+
+O desenho previa 28 execuções, mas as anomalias 1 e 2 limitaram a coleta a 23, e todas as 23 têm JSON na release. Para conferir um arquivo baixado, compare o SHA-256 dele com o do manifesto.

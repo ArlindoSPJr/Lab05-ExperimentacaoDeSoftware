@@ -112,6 +112,8 @@ Conforme a decisão do #A-8, antes de 25/11 às 20h07 é preciso **desativar os 
 - no Windows, rodar `powershell -File scripts\agendar_windows.ps1 -Remover`;
 - no cron-job.org, se tiver sido usado, desativar as 4 tarefas e **revogar o token**.
 
+**Estado em 26/11/2026 (#B-8):** o workflow está desabilitado (`disabled_manually`) e as tarefas do Windows foram removidas. Os JSONs estão na release [`coleta-principal`](https://github.com/ArlindoSPJr/Lab05-ExperimentacaoDeSoftware/releases/tag/coleta-principal) (ver [`dados.md`](dados.md#jsons-brutos-release-coleta-principal-b-8)). Ainda falta desativar as tarefas e revogar o token do cron-job.org.
+
 ## Limites que continuam valendo
 
 - A cadência não mudou: 4 execuções por noite, 38 chamadas cada, com ≥ 2 s entre chamadas (`docs/etica.md`).
