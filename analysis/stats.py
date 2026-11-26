@@ -79,6 +79,48 @@ def _razao(beta: float, ic: tuple[float, float]) -> tuple[float, tuple[float, fl
     return float(np.exp(-2 * beta)), (float(np.exp(-2 * ic[1])), float(np.exp(-2 * ic[0])))
 
 
+def base_modelo(df: pd.DataFrame, metrica: str) -> pd.DataFrame:
+    """Linhas usadas pelo modelo misto: valores > 0, sem a home e, no TTFB, só a fonte observada."""
+    base = df[(df[metrica] > 0) & (df["tipo"] != "home")].copy()
+    if metrica == "ttfb_ms" and "ttfb_origem" in base.columns:
+        base = base[base["ttfb_origem"] == "server-response-time"]
+    # Índice único: CSVs diários concatenados repetem o índice e o mixedlm se perde.
+    return base.reset_index(drop=True)
+
+
+def _ajustar_misto(base: pd.DataFrame, resposta: str):
+    """Ajusta resposta ~ strategy * janela * tipo (Sum) com efeitos cruzados de URL e dia."""
+    fatores = [f for f in FATORES if base[f].nunique() > 1]
+    formula = f"{resposta} ~ " + (" * ".join(f"C({f}, Sum)" for f in fatores) if fatores else "1")
+    vc = {"slot": "0 + C(slot_id)"}
+    if base["data_brt"].nunique() > 1:
+        vc["dia"] = "0 + C(data_brt)"
+    modelo = smf.mixedlm(
+        formula, base, groups=np.ones(len(base)), vc_formula=vc, re_formula="0"
+    )
+    # O bfgs (padrão) não convergiu nos dados de 19–23/11; o lbfgs converge e
+    # chega a uma verossimilhança maior. Powell fica de reserva.
+    return modelo.fit(reml=True, method=["lbfgs", "powell"])
+
+
+TERMO_EFEITO = {"strategy": "C(strategy, Sum)[S.desktop]", "janela": "C(janela, Sum)[S.madrugada]"}
+
+
+def modelo_art(df: pd.DataFrame, metrica: str, efeito: str) -> dict:
+    """Alternativa robusta: o mesmo modelo misto sobre os postos alinhados (ART) de um efeito.
+
+    efeito é "strategy" (H1) ou "janela" (H3). Devolve o p-valor do efeito
+    sobre os postos e se o ajuste convergiu. A razão continua vindo do
+    modelo em log, porque os postos não têm unidade.
+    """
+    base = base_modelo(df, metrica)
+    alinhado = art_alinhar(base, metrica, efeito)
+    ajuste = _ajustar_misto(alinhado, f"{metrica}_art")
+    termo = TERMO_EFEITO[efeito]
+    p = float(ajuste.pvalues[termo]) if termo in ajuste.pvalues.index else np.nan
+    return {"p": p, "convergiu": bool(ajuste.converged)}
+
+
 def modelo_misto(df: pd.DataFrame, metrica: str) -> dict:
     """Modelo misto de log(métrica) com efeitos aleatórios cruzados de URL e dia.
 
@@ -93,29 +135,22 @@ def modelo_misto(df: pd.DataFrame, metrica: str) -> dict:
     tipo). Para ttfb_ms, usa só o TTFB observado (ttfb_origem =
     server-response-time). Fatores com um nível só saem da fórmula e a razão
     correspondente volta NaN (ex.: o piloto, que só tem madrugada).
-    A chave extra "convergiu" diz se o otimizador convergiu.
+    Chaves extras: "convergiu" (o otimizador convergiu), "ajustados" e
+    "residuos_padronizados" (para o QQ-plot e o gráfico de resíduos) e
+    "frac_residuos_3" (fração de |resíduo padronizado| > 3, critério do ART).
     """
-    base = df[(df[metrica] > 0) & (df["tipo"] != "home")].copy()
-    if metrica == "ttfb_ms" and "ttfb_origem" in base.columns:
-        base = base[base["ttfb_origem"] == "server-response-time"]
-    # Índice único: CSVs diários concatenados repetem o índice e o mixedlm se perde.
-    base = base.reset_index(drop=True)
+    base = base_modelo(df, metrica)
     base["y"] = np.log(base[metrica])
-
-    fatores = [f for f in FATORES if base[f].nunique() > 1]
-    formula = "y ~ " + (" * ".join(f"C({f}, Sum)" for f in fatores) if fatores else "1")
-    vc = {"slot": "0 + C(slot_id)"}
-    if base["data_brt"].nunique() > 1:
-        vc["dia"] = "0 + C(data_brt)"
-    modelo = smf.mixedlm(
-        formula, base, groups=np.ones(len(base)), vc_formula=vc, re_formula="0"
-    )
-    # O bfgs (padrão) não convergiu nos dados de 19–23/11; o lbfgs converge e
-    # chega a uma verossimilhança maior. Powell fica de reserva.
-    ajuste = modelo.fit(reml=True, method=["lbfgs", "powell"])
+    ajuste = _ajustar_misto(base, "y")
     ic = ajuste.conf_int()
+    residuos = np.asarray(ajuste.resid) / np.sqrt(ajuste.scale)
 
-    resultado = {"convergiu": bool(ajuste.converged)}
+    resultado = {
+        "convergiu": bool(ajuste.converged),
+        "ajustados": np.asarray(ajuste.fittedvalues),
+        "residuos_padronizados": residuos,
+        "frac_residuos_3": float(np.mean(np.abs(residuos) > 3)),
+    }
     for chave, fator, nivel in (("perfil", "strategy", "desktop"), ("pico", "janela", "madrugada")):
         termo = f"C({fator}, Sum)[S.{nivel}]"
         if termo in ajuste.params.index:

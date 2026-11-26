@@ -1,4 +1,4 @@
-# Análise (#C-4)
+# Análise (#C-4, #C-6)
 
 Gerado por `analysis/analise.py --input data/raw/2026-11-19_BRT.csv`. Datas: 2026-11-19 a 2026-11-19 (1 dia, 2 execuções). Linhas lidas: 76; após o filtro mínimo: 76.
 
@@ -9,15 +9,32 @@ Gerado por `analysis/analise.py --input data/raw/2026-11-19_BRT.csv`. Datas: 202
 
 ## Testes de hipótese (primários, bilaterais, Holm sobre os 5)
 
-| hipotese | teste | n | estatistica_nome | estatistica | p | p_holm | efeito_nome | efeito | IC 95% |
-|---|---|---|---|---|---|---|---|---|---|
-| H1 | Modelo misto, log(LCP) | 72 |  | — | < 0,001 | < 0,001 | razão móvel/desktop | 4,516 | 4,044 a 5,043 |
-| H2 | Kruskal-Wallis, mediana do LCP por URL (móvel) | 18 | H | 2,117 | 0,347 | 0,347 | ε² | 0,125 |  |
-| H3 | Modelo misto, log(TTFB) | 72 |  | — | — | — | razão pico/madrugada | — |  |
-| H4 | Kruskal-Wallis, moda das reprovadas por URL (móvel) | 18 | H | 12,610 | 0,002 | 0,004 | ε² | 0,742 |  |
-| H5 | Wilcoxon pareado, LCP sintético × p75 CrUX (móvel) | 18 |  | — | < 0,001 | < 0,001 | kappa (categoria) | -0,047 |  |
+| hipotese | teste | metodo_p | n | estatistica_nome | estatistica | p | p_holm | efeito_nome | efeito | IC 95% |
+|---|---|---|---|---|---|---|---|---|---|---|
+| H1 | Modelo misto, log(LCP) | modelo em log | 72 |  | — | < 0,001 | < 0,001 | razão móvel/desktop | 4,516 | 4,044 a 5,043 |
+| H2 | Kruskal-Wallis, mediana do LCP por URL (móvel) | Kruskal-Wallis | 18 | H | 2,117 | 0,347 | 0,347 | ε² | 0,125 | 0,008 a 0,813 |
+| H3 | Modelo misto, log(TTFB) | modelo em log | 72 |  | — | — | — | razão pico/madrugada | — |  |
+| H4 | Kruskal-Wallis, moda das reprovadas por URL (móvel) | Kruskal-Wallis | 18 | H | 12,610 | 0,002 | 0,004 | ε² | 0,742 | 0,726 a 0,887 |
+| H5 | Wilcoxon pareado, LCP sintético × p75 CrUX (móvel) | Wilcoxon pareado | 18 |  | — | < 0,001 | < 0,001 | kappa (categoria) | -0,047 |  |
 
 H5: Spearman ρ = -0,368; Bland-Altman: média 2.683 ms, limites -2.356 a 7.723 ms.
+
+As razões de H1 e H3 têm IC de Wald do modelo em log; o ε² de H2 e H4 e o Cliff's delta têm IC percentil por bootstrap (2000 reamostragens, semente 20261126).
+
+### Diagnóstico dos modelos mistos e alternativa robusta
+
+Critério fixado antes de olhar os p (design §5.8): se mais de 5% dos resíduos padronizados passarem de ±3, o p primário vem do modelo misto sobre postos alinhados (ART). H1: 0,0% dos resíduos além de ±3, dentro do limite de 5%, então vale o modelo em log. H3: 0,0% dos resíduos além de ±3, dentro do limite de 5%, então vale o modelo em log.
+
+| hipotese | frac_residuos_3 | limiar | usa_art | p_modelo_log | p_art |
+|---|---|---|---|---|---|
+| H1 | 0,000 | 0,050 | não | < 0,001 | — |
+| H3 | 0,000 | 0,050 | não | — | — |
+
+QQ-plots e resíduos × ajustados em `residuos_H1.png` e `residuos_H3.png`.
+
+### Mudança de versão do Lighthouse
+
+Não houve mudança de versão: todas as linhas usam o Lighthouse 13.6.0. A rodada sem os dias afetados não se aplica.
 
 ### Post-hoc de Dunn
 
@@ -46,10 +63,10 @@ H5: Spearman ρ = -0,368; Bland-Altman: média 2.683 ms, limites -2.356 a 7.723 
 
 ### Cliff's delta sobre as medianas por slot
 
-| efeito | metrica | grupo_a | grupo_b | n_a | n_b | cliffs_delta |
-|---|---|---|---|---|---|---|
-| perfil | lcp_ms | mobile | desktop | 18 | 18 | 1,000 |
-| horario | ttfb_ms | pico | madrugada | 0 | 0 | — |
+| efeito | metrica | grupo_a | grupo_b | n_unidades | cliffs_delta | ic_inf | ic_sup |
+|---|---|---|---|---|---|---|---|
+| perfil | lcp_ms | mobile | desktop | 18 | 1,000 | 1,000 | 1,000 |
+| horario | ttfb_ms | pico | madrugada | 0 | — | — | — |
 
 ## Descritiva: medianas e SLI por combinação
 
@@ -81,3 +98,5 @@ LCP e TTFB em ms; SLI = fração das medições com LCP ≤ 2,5 s. Os valores co
 ![boxplot_ttfb_ms.png](boxplot_ttfb_ms.png)
 ![boxplot_a11y_reprovadas.png](boxplot_a11y_reprovadas.png)
 ![bland_altman.png](bland_altman.png)
+![residuos_H1.png](residuos_H1.png)
+![residuos_H3.png](residuos_H3.png)

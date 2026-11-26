@@ -37,11 +37,16 @@ from analysis.stats import (  # noqa: E402
     filtro_minimo,
     holm,
     kruskal_por_tipo,
+    modelo_art,
     modelo_misto,
     por_url,
 )
+from scipy import stats as st  # noqa: E402
 
 LIMIAR_SLO_MS = 2500
+LIMIAR_ART = 0.05  # fração de resíduos padronizados além de ±3 que aciona o ART
+N_BOOT = 2000
+SEMENTE = 20261126
 COMBINACAO = ["tipo", "strategy", "janela"]
 METRICAS = [
     "lcp_ms", "fcp_ms", "speed_index_ms", "tbt_ms", "ttfb_ms",
@@ -135,32 +140,62 @@ def testes(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, dict]:
         h1 = modelo_misto(t, "lcp_ms")
         h3 = modelo_misto(t, "ttfb_ms")
         h5 = concordancia_crux(t)
-    h2 = kruskal_por_tipo(por_url(movel, "lcp_ms"), "lcp_ms")
-    h4 = kruskal_por_tipo(por_url(movel, "a11y_reprovadas", agg="mode"), "a11y_reprovadas")
+    url_lcp = por_url(movel, "lcp_ms")
+    url_a11y = por_url(movel, "a11y_reprovadas", agg="mode")
+    h2 = kruskal_por_tipo(url_lcp, "lcp_ms")
+    h4 = kruskal_por_tipo(url_a11y, "a11y_reprovadas")
     for nome, res in (("H1", h1), ("H3", h3)):
         if not res["convergiu"]:
             avisos.append(f"O modelo misto de {nome} não convergiu.")
 
+    # Critério fixado antes de olhar os p (design §5.8): mais de 5% dos
+    # resíduos padronizados além de ±3 → o p primário vem do ART.
+    diagnostico, p_mm = [], {}
+    for nome, res, metrica, efeito, chave in (
+        ("H1", h1, "lcp_ms", "strategy", "p_perfil"),
+        ("H3", h3, "ttfb_ms", "janela", "p_pico"),
+    ):
+        frac = res["frac_residuos_3"]
+        usa_art = frac > LIMIAR_ART and not np.isnan(res[chave])
+        p_art = np.nan
+        if usa_art:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                p_art = modelo_art(t, metrica, efeito)["p"]
+        diagnostico.append({"hipotese": nome, "frac_residuos_3": frac, "limiar": LIMIAR_ART,
+                            "usa_art": usa_art, "p_modelo_log": res[chave], "p_art": p_art})
+        p_mm[nome] = (p_art if usa_art else res[chave], "ART (postos alinhados)" if usa_art else "modelo em log")
+
+    ic_h2 = bootstrap_eps2(url_lcp, "lcp_ms")
+    ic_h4 = bootstrap_eps2(url_a11y, "a11y_reprovadas")
+
     ba = h5["bland_altman"]
     linhas = [
-        {"hipotese": "H1", "teste": "Modelo misto, log(LCP)", "n": _n_modelo(t, "lcp_ms"),
-         "estatistica_nome": "", "estatistica": np.nan, "p": h1["p_perfil"],
+        {"hipotese": "H1", "teste": "Modelo misto, log(LCP)", "metodo_p": p_mm["H1"][1], "n": _n_modelo(t, "lcp_ms"),
+         "estatistica_nome": "", "estatistica": np.nan, "p": p_mm["H1"][0],
          "efeito_nome": "razão móvel/desktop", "efeito": h1["razao_perfil"],
-         "ic_inf": h1["ic95_perfil"][0], "ic_sup": h1["ic95_perfil"][1], "outros": ""},
-        {"hipotese": "H2", "teste": "Kruskal-Wallis, mediana do LCP por URL (móvel)", "n": int(movel["slot_id"].nunique()),
+         "ic_inf": h1["ic95_perfil"][0], "ic_sup": h1["ic95_perfil"][1], "ic_metodo": "Wald (modelo em log)",
+         "outros": ""},
+        {"hipotese": "H2", "teste": "Kruskal-Wallis, mediana do LCP por URL (móvel)", "metodo_p": "Kruskal-Wallis",
+         "n": int(url_lcp["slot_id"].nunique()),
          "estatistica_nome": "H", "estatistica": h2["H"], "p": h2["p"],
-         "efeito_nome": "ε²", "efeito": h2["eps2"], "ic_inf": np.nan, "ic_sup": np.nan, "outros": ""},
-        {"hipotese": "H3", "teste": "Modelo misto, log(TTFB)", "n": _n_modelo(t, "ttfb_ms"),
-         "estatistica_nome": "", "estatistica": np.nan, "p": h3["p_pico"],
+         "efeito_nome": "ε²", "efeito": h2["eps2"], "ic_inf": ic_h2[0], "ic_sup": ic_h2[1],
+         "ic_metodo": f"bootstrap percentil ({N_BOOT} reamostragens)", "outros": ""},
+        {"hipotese": "H3", "teste": "Modelo misto, log(TTFB)", "metodo_p": p_mm["H3"][1], "n": _n_modelo(t, "ttfb_ms"),
+         "estatistica_nome": "", "estatistica": np.nan, "p": p_mm["H3"][0],
          "efeito_nome": "razão pico/madrugada", "efeito": h3["razao_pico"],
-         "ic_inf": h3["ic95_pico"][0], "ic_sup": h3["ic95_pico"][1], "outros": ""},
-        {"hipotese": "H4", "teste": "Kruskal-Wallis, moda das reprovadas por URL (móvel)", "n": int(movel["slot_id"].nunique()),
+         "ic_inf": h3["ic95_pico"][0], "ic_sup": h3["ic95_pico"][1], "ic_metodo": "Wald (modelo em log)",
+         "outros": ""},
+        {"hipotese": "H4", "teste": "Kruskal-Wallis, moda das reprovadas por URL (móvel)", "metodo_p": "Kruskal-Wallis",
+         "n": int(url_a11y["slot_id"].nunique()),
          "estatistica_nome": "H", "estatistica": h4["H"], "p": h4["p"],
-         "efeito_nome": "ε²", "efeito": h4["eps2"], "ic_inf": np.nan, "ic_sup": np.nan, "outros": ""},
+         "efeito_nome": "ε²", "efeito": h4["eps2"], "ic_inf": ic_h4[0], "ic_sup": ic_h4[1],
+         "ic_metodo": f"bootstrap percentil ({N_BOOT} reamostragens)", "outros": ""},
         {"hipotese": "H5", "teste": "Wilcoxon pareado, LCP sintético × p75 CrUX (móvel)", "n": h5["n_pares"],
          "estatistica_nome": "", "estatistica": np.nan, "p": h5["wilcoxon_p"],
+         "metodo_p": "Wilcoxon pareado",
          "efeito_nome": "kappa (categoria)", "efeito": h5["kappa"], "ic_inf": np.nan, "ic_sup": np.nan,
-         "outros": (f"Spearman ρ = {_f(h5['spearman_rho'])}; Bland-Altman: média {_f(ba['media'], 0)} ms, "
+         "ic_metodo": "", "outros": (f"Spearman ρ = {_f(h5['spearman_rho'])}; Bland-Altman: média {_f(ba['media'], 0)} ms, "
                     f"limites {_f(ba['limite_inferior'], 0)} a {_f(ba['limite_superior'], 0)} ms")},
     ]
     tabela = pd.DataFrame(linhas)
@@ -182,32 +217,88 @@ def testes(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, dict]:
         sens.append({"hipotese": h, "perfil": "desktop", "H": r["H"], "p": r["p"], "eps2": r["eps2"]})
 
     dunn = {"H2": h2["dunn"], "H4": h4["dunn"]}
-    return tabela, pd.DataFrame(sens), {"avisos": avisos, "dunn": dunn, "h5": h5}
+    return tabela, pd.DataFrame(sens), {
+        "avisos": avisos, "dunn": dunn, "h5": h5,
+        "diagnostico": pd.DataFrame(diagnostico), "modelos": {"H1": h1, "H3": h3},
+    }
 
 
-def efeitos_cliff(df: pd.DataFrame) -> pd.DataFrame:
-    """Cliff's delta sobre as medianas por slot: perfil (LCP) e horário (TTFB)."""
+def bootstrap_eps2(df_url: pd.DataFrame, metrica: str, n_boot: int = None, semente: int = SEMENTE) -> tuple[float, float]:
+    """IC percentil de 95% do ε² do Kruskal-Wallis, reamostrando URLs dentro de cada tipo."""
+    n_boot = n_boot or N_BOOT
+    rng = np.random.default_rng(semente)
+    base = df_url[df_url["tipo"] != "home"].dropna(subset=[metrica])
+    grupos = [g[metrica].to_numpy() for _, g in base.groupby("tipo")]
+    n = sum(len(g) for g in grupos)
+    valores = []
+    for _ in range(n_boot):
+        amostra = [rng.choice(g, size=len(g), replace=True) for g in grupos]
+        if np.ptp(np.concatenate(amostra)) == 0:
+            valores.append(0.0)  # todos iguais: H = 0
+            continue
+        h = st.kruskal(*amostra).statistic
+        valores.append(h * (n + 1) / (n**2 - 1))
+    return tuple(float(v) for v in np.percentile(valores, [2.5, 97.5]))
+
+
+def efeitos_cliff(df: pd.DataFrame, n_boot: int = None, semente: int = SEMENTE) -> pd.DataFrame:
+    """Cliff's delta sobre as medianas por slot: perfil (LCP) e horário (TTFB), com IC por bootstrap.
+
+    O bootstrap reamostra as unidades (slot, ou slot × perfil no horário)
+    com os dois grupos juntos, porque as medianas vêm das mesmas URLs.
+    """
+    n_boot = n_boot or N_BOOT
+    rng = np.random.default_rng(semente)
     t = df[df["tipo"] != "home"]
     lcp = t.groupby(["slot_id", "strategy"])["lcp_ms"].median().unstack()
     ttfb_base = t[t["ttfb_origem"] == "server-response-time"]
     ttfb = ttfb_base.groupby(["slot_id", "strategy", "janela"])["ttfb_ms"].median().unstack()
-
-    def delta(tab, a, b):
-        if a in tab and b in tab:
-            x, y = tab[a].dropna(), tab[b].dropna()
-            if len(x) and len(y):
-                return cliffs_delta(x, y), len(x), len(y)
-        return np.nan, 0, 0
 
     linhas = []
     for nome, metrica, tab, a, b in (
         ("perfil", "lcp_ms", lcp, "mobile", "desktop"),
         ("horario", "ttfb_ms", ttfb, "pico", "madrugada"),
     ):
-        d, na, nb = delta(tab, a, b)
-        linhas.append({"efeito": nome, "metrica": metrica, "grupo_a": a, "grupo_b": b,
-                       "n_a": na, "n_b": nb, "cliffs_delta": d})
+        d, ic, n = np.nan, (np.nan, np.nan), 0
+        if a in tab and b in tab:
+            pares = tab[[a, b]].dropna().to_numpy()
+            n = len(pares)
+            if n:
+                d = cliffs_delta(pares[:, 0], pares[:, 1])
+                boot = []
+                for _ in range(n_boot):
+                    amostra = pares[rng.integers(0, n, n)]
+                    boot.append(cliffs_delta(amostra[:, 0], amostra[:, 1]))
+                ic = tuple(float(v) for v in np.percentile(boot, [2.5, 97.5]))
+        linhas.append({"efeito": nome, "metrica": metrica, "grupo_a": a, "grupo_b": b, "n_unidades": n,
+                       "cliffs_delta": d, "ic_inf": ic[0], "ic_sup": ic[1]})
     return pd.DataFrame(linhas)
+
+
+def graficos_residuos(modelos: dict, pasta: Path) -> list[str]:
+    """QQ-plot e resíduos × ajustados dos modelos mistos de H1 e H3."""
+    nomes = []
+    rotulo = {"H1": "H1: log(LCP)", "H3": "H3: log(TTFB)"}
+    for h, res in modelos.items():
+        r, f = res["residuos_padronizados"], res["ajustados"]
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
+        st.probplot(r, dist="norm", plot=ax1)
+        ax1.set_title(f"QQ-plot dos resíduos padronizados — {rotulo[h]}")
+        ax1.set_xlabel("Quantis teóricos (normal)")
+        ax1.set_ylabel("Resíduos padronizados")
+        ax2.scatter(f, r, s=6, alpha=0.5)
+        for y in (-3, 3):
+            ax2.axhline(y, color="gray", ls="--", lw=1)
+        ax2.axhline(0, color="black", lw=0.8)
+        ax2.set_title(f"Resíduos × ajustados — {rotulo[h]}")
+        ax2.set_xlabel("Valor ajustado (log)")
+        ax2.set_ylabel("Resíduo padronizado")
+        fig.tight_layout()
+        nome = f"residuos_{h}.png"
+        fig.savefig(pasta / nome, dpi=130)
+        plt.close(fig)
+        nomes.append(nome)
+    return nomes
 
 
 # ---------------------------------------------------------------- gráficos
@@ -316,9 +407,18 @@ def relatorio(entrada, bruto, df, falhas, desc_agr, sli, tab, sens, cliff, extra
     ]
     for col in ("p", "p_holm"):
         t[col] = [_p(v) for v in t[col]]
-    t = t[["hipotese", "teste", "n", "estatistica_nome", "estatistica", "p", "p_holm",
+    t = t[["hipotese", "teste", "metodo_p", "n", "estatistica_nome", "estatistica", "p", "p_holm",
            "efeito_nome", "efeito", "IC 95%"]]
     n_dias = df["data_brt"].nunique()
+    diag = extras["diagnostico"].copy()
+    diag["usa_art"] = diag["usa_art"].map({True: "sim", False: "não"})
+    for col in ("p_modelo_log", "p_art"):
+        diag[col] = [_p(v) for v in diag[col]]
+    decisao = " ".join(
+        f"{r.hipotese}: {_f(100 * r.frac_residuos_3, 1)}% dos resíduos além de ±3, "
+        + ("acima de 5%, então o p primário vem do ART." if r.usa_art else "dentro do limite de 5%, então vale o modelo em log.")
+        for r in extras["diagnostico"].itertuples()
+    )
     lcp = desc_agr[desc_agr["metrica"].isin(["lcp_ms", "ttfb_ms", "a11y_reprovadas"])]
     resumo = lcp.pivot_table(index=COMBINACAO, columns="metrica", values="mediana").reset_index()
     resumo = resumo.merge(sli[COMBINACAO + ["sli"]], on=COMBINACAO)
@@ -329,7 +429,7 @@ def relatorio(entrada, bruto, df, falhas, desc_agr, sli, tab, sens, cliff, extra
         for h, d in extras["dunn"].items()
     )
     figuras = "\n".join(f"![{g}]({g})" for g in graficos)
-    return f"""# Análise (#C-4)
+    return f"""# Análise (#C-4, #C-6)
 
 Gerado por `analysis/analise.py --input {entrada}`. Datas: {df['data_brt'].min()} a {df['data_brt'].max()} ({n_dias} {'dia' if n_dias == 1 else 'dias'}, {df['run_id'].nunique()} execuções). Linhas lidas: {len(bruto)}; após o filtro mínimo: {len(df)}.
 
@@ -342,6 +442,20 @@ Gerado por `analysis/analise.py --input {entrada}`. Datas: {df['data_brt'].min()
 {_tabela(t)}
 
 H5: {outros_h5}.
+
+As razões de H1 e H3 têm IC de Wald do modelo em log; o ε² de H2 e H4 e o Cliff's delta têm IC percentil por bootstrap ({N_BOOT} reamostragens, semente {SEMENTE}).
+
+### Diagnóstico dos modelos mistos e alternativa robusta
+
+Critério fixado antes de olhar os p (design §5.8): se mais de 5% dos resíduos padronizados passarem de ±3, o p primário vem do modelo misto sobre postos alinhados (ART). {decisao}
+
+{_tabela(diag)}
+
+QQ-plots e resíduos × ajustados em `residuos_H1.png` e `residuos_H3.png`.
+
+### Mudança de versão do Lighthouse
+
+{extras['versao']}
 
 ### Post-hoc de Dunn
 
@@ -390,10 +504,24 @@ def main(argv: list[str] | None = None) -> None:
     sli = sli_lcp(df)
     tab, sens, extras = testes(df)
     cliff = efeitos_cliff(df)
+
+    # Regra S1: se a versão do Lighthouse mudou, H1–H5 rodam de novo sem os dias afetados.
+    sem_mudanca = None
+    if "sinal_mudanca_versao" in df and df["sinal_mudanca_versao"].fillna(False).astype(bool).any():
+        afetadas = sorted(df.loc[df["sinal_mudanca_versao"].fillna(False).astype(bool), "data_brt"].unique())
+        sem_mudanca, _, _ = testes(df[~df["data_brt"].isin(afetadas)])
+        extras["versao"] = (f"Houve mudança de versão em {', '.join(afetadas)}. H1–H5 sem esses dias estão em "
+                            "`tabela_hipoteses_sem_mudanca.csv`, para comparar lado a lado.")
+    else:
+        versoes = ", ".join(sorted(df["lighthouse_version"].dropna().astype(str).unique()))
+        extras["versao"] = (f"Não houve mudança de versão: todas as linhas usam o Lighthouse {versoes}. "
+                            "A rodada sem os dias afetados não se aplica.")
+
     graficos = boxplots(df, args.out)
     ba = bland_altman(df, extras["h5"], args.out)
     if ba:
         graficos.append(ba)
+    graficos += graficos_residuos(extras["modelos"], args.out)
 
     falhas.to_csv(args.out / "falhas.csv", index=False)
     desc_slot.to_csv(args.out / "descritiva_slot.csv", index=False)
@@ -402,6 +530,9 @@ def main(argv: list[str] | None = None) -> None:
     tab.to_csv(args.out / "tabela_hipoteses.csv", index=False)
     sens.to_csv(args.out / "sensibilidade_desktop.csv", index=False)
     cliff.to_csv(args.out / "cliffs_delta.csv", index=False)
+    extras["diagnostico"].to_csv(args.out / "diagnostico_residuos.csv", index=False)
+    if sem_mudanca is not None:
+        sem_mudanca.to_csv(args.out / "tabela_hipoteses_sem_mudanca.csv", index=False)
     (args.out / "relatorio.md").write_text(
         relatorio(args.input.as_posix(), bruto, df, falhas, desc_agr, sli, tab, sens, cliff, extras, graficos),
         encoding="utf-8",
