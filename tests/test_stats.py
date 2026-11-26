@@ -157,3 +157,15 @@ def test_art_alinhar():
     alinhado = art_alinhar(pd.DataFrame(linhas), "lcp_ms", "strategy")
     medianas = alinhado.groupby("strategy")["lcp_ms_art"].median()
     assert abs(medianas["desktop"] - medianas["mobile"]) <= 1
+
+
+def test_modelo_misto_residuos():
+    resultado = modelo_misto(dados_sinteticos(razao_movel=2.0), "lcp_ms")
+    assert len(resultado["residuos_padronizados"]) == len(resultado["ajustados"])
+    assert 0 <= resultado["frac_residuos_3"] < 0.05
+
+
+def test_modelo_art_detecta_efeito():
+    from analysis.stats import modelo_art
+
+    assert modelo_art(dados_sinteticos(razao_movel=2.0), "lcp_ms", "strategy")["p"] < 0.05
