@@ -92,6 +92,8 @@ LCP e TTFB em ms; SLI = fração das medições com LCP ≤ 2,5 s. Os valores co
 | linha_bloqueada | 76 | 0 | 0,000 |
 | linha_com_erro | 76 | 0 | 0,000 |
 
+A taxa é calculada sobre a entrada lida. Com o dataset validado (`data/processed/dataset.csv`) como entrada, as linhas com erro já foram excluídas pela validação (`scripts/validate.py`), e a taxa sai zerada; a taxa da coleta bruta está na seção "Validação da coleta principal" de `docs/anomalias.md`.
+
 ## Gráficos
 
 ![boxplot_lcp_ms.png](boxplot_lcp_ms.png)
