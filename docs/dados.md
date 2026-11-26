@@ -107,3 +107,14 @@ Todas as execuções usam a home (`https://www.mercadolivre.com.br/`), o perfil 
 3. **O LCP de laboratório foi maior no Actions** (5,8–7,4 s contra 3,5–3,8 s). Esta checagem não separa a origem do horário: as execuções do Actions foram de madrugada e as manuais de manhã, e o LCP simulado varia entre execuções. Não dá para atribuir a diferença à localização.
 
 **Consequência para a validade:** os números medem a experiência de um celular emulado com rede 4G lenta simulada, num servidor da América do Norte, e **não** a de um usuário real no Brasil. A ameaça externa (§5.10) é mitigada só em parte. A comparação entre janelas continua válida porque todas as medições usam o mesmo ponto de teste, mas os valores absolutos não podem ser lidos como "o que o brasileiro vê". Para isso servem os campos `crux_*`, que são dados de campo de usuários reais do Chrome.
+
+## Dataset consolidado (`data/processed/dataset.csv`, #B-7)
+
+Gerado por `python scripts/validate.py` a partir de `data/raw/*.csv` (sem subpastas). Tem as mesmas colunas dos CSVs brutos, só com as linhas que passam nas regras de descarte D1–D4 de [`proposta.md`](proposta.md#regras-de-validação), e mais duas colunas:
+
+| Coluna | Tipo | Significado |
+|---|---|---|
+| `sinal_mudanca_versao` | booleano | Regra S1: `True` quando a `lighthouse_version` da linha difere da versão da primeira linha válida da coleta. A linha continua no dataset |
+| `par_calendario` | texto (`AAAA-MM-DD <cron>`) | Par do calendário do desenho (28 pares `data_brt` × `cron`) que a execução ocupa. Difere do `data_brt`/`cron` da linha só nas execuções remanejadas (ex.: o pico de 18/11 que atrasou e mediu na madrugada de 19/11, anomalia 1). Fica vazio numa execução extra |
+
+O recorte usa o `ts_inicio_utc` da execução, em [2026-11-18T21:00Z, 2026-11-25T11:00Z), ou seja, de 18/11 18h00 a 25/11 08h00 BRT. A reconciliação com as 1.064 medições previstas e cada exclusão ficam em [`anomalias.md`](anomalias.md#validação-da-coleta-principal-scriptsvalidatepy-b-7).
